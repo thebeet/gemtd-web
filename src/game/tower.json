@@ -1,0 +1,190 @@
+{
+  "$schemaVersion": 1,
+  "metadata": {
+    "game": "Dota 2 GemTD",
+    "dataStatus": "source-derived",
+    "verifiedAt": "2026-08-26",
+    "source": {
+      "repository": "https://github.com/customgamessourcecode/GemTD",
+      "units": "scripts/npc/npc_units_custom.txt",
+      "recipes": "scripts/vscripts/addon_game_mode.lua"
+    },
+    "notice": "数据来自公开的 GemTD 源码镜像 master 分支，可能与当前 Steam Workshop 版本存在平衡差异。attackIntervalSeconds 越小，攻击速度越快。"
+  },
+  "qualityLevels": [
+    { "level": 1, "id": "chipped", "name": "碎裂" },
+    { "level": 2, "id": "flawed", "name": "瑕疵" },
+    { "level": 3, "id": "normal", "name": "普通" },
+    { "level": 4, "id": "flawless", "name": "无瑕" },
+    { "level": 5, "id": "perfect", "name": "完美" },
+    { "level": 6, "id": "huge", "name": "巨大" }
+  ],
+  "playerLevelProbabilities": {
+    "1": [100, 0, 0, 0, 0],
+    "2": [80, 20, 0, 0, 0],
+    "3": [60, 30, 10, 0, 0],
+    "4": [40, 30, 20, 10, 0],
+    "5": [10, 30, 30, 20, 10]
+  },
+  "baseTowers": [
+    {
+      "id": "diamond",
+      "name": "钻石",
+      "sourcePrefix": "gemtd_d",
+      "role": "暴击与高单体伤害",
+      "levels": [
+        { "level": 1, "unitId": "gemtd_d1", "damage": [5, 5], "attackIntervalSeconds": 1, "range": 500, "abilities": [] },
+        { "level": 2, "unitId": "gemtd_d11", "damage": [10, 10], "attackIntervalSeconds": 1, "range": 500, "abilities": [] },
+        { "level": 3, "unitId": "gemtd_d111", "damage": [20, 20], "attackIntervalSeconds": 1, "range": 500, "abilities": [] },
+        { "level": 4, "unitId": "gemtd_d1111", "damage": [20, 20], "attackIntervalSeconds": 1, "range": 500, "abilities": ["tower_attack1"] },
+        { "level": 5, "unitId": "gemtd_d11111", "damage": [40, 40], "attackIntervalSeconds": 1, "range": 500, "abilities": ["tower_attack2"] },
+        { "level": 6, "unitId": "gemtd_d111111", "damage": [140, 140], "attackIntervalSeconds": 0.7, "range": 500, "abilities": ["tower_attack5"] }
+      ]
+    },
+    {
+      "id": "sapphire",
+      "name": "蓝宝石",
+      "sourcePrefix": "gemtd_b",
+      "role": "攻击减速",
+      "levels": [
+        { "level": 1, "unitId": "gemtd_b1", "damage": [2, 2], "attackIntervalSeconds": 1, "range": 600, "abilities": ["tower_slow1"] },
+        { "level": 2, "unitId": "gemtd_b11", "damage": [4, 4], "attackIntervalSeconds": 1, "range": 600, "abilities": ["tower_slow2"] },
+        { "level": 3, "unitId": "gemtd_b111", "damage": [6, 6], "attackIntervalSeconds": 1, "range": 600, "abilities": ["tower_slow3"] },
+        { "level": 4, "unitId": "gemtd_b1111", "damage": [8, 8], "attackIntervalSeconds": 1, "range": 600, "abilities": ["tower_slow4"] },
+        { "level": 5, "unitId": "gemtd_b11111", "damage": [10, 10], "attackIntervalSeconds": 1, "range": 600, "abilities": ["tower_slow5"] },
+        { "level": 6, "unitId": "gemtd_b111111", "damage": [36, 36], "attackIntervalSeconds": 0.6, "range": 600, "abilities": ["tower_slow6"] }
+      ]
+    },
+    {
+      "id": "topaz",
+      "name": "黄玉",
+      "sourcePrefix": "gemtd_y",
+      "role": "多重攻击",
+      "levels": [
+        { "level": 1, "unitId": "gemtd_y1", "damage": [3, 3], "attackIntervalSeconds": 1.3, "range": 600, "abilities": ["tower_fenliejian"] },
+        { "level": 2, "unitId": "gemtd_y11", "damage": [6, 6], "attackIntervalSeconds": 1.3, "range": 500, "abilities": ["tower_fenliejian"] },
+        { "level": 3, "unitId": "gemtd_y111", "damage": [9, 9], "attackIntervalSeconds": 1.3, "range": 500, "abilities": ["tower_fenliejian"] },
+        { "level": 4, "unitId": "gemtd_y1111", "damage": [18, 18], "attackIntervalSeconds": 1.3, "range": 500, "abilities": ["tower_fenliejian"] },
+        { "level": 5, "unitId": "gemtd_y11111", "damage": [36, 36], "attackIntervalSeconds": 1.3, "range": 500, "abilities": ["tower_fenliejian"] },
+        { "level": 6, "unitId": "gemtd_y111111", "damage": [200, 200], "attackIntervalSeconds": 0.6, "range": 5000, "abilities": ["tower_fenliejian"] }
+      ]
+    },
+    {
+      "id": "ruby",
+      "name": "红宝石",
+      "sourcePrefix": "gemtd_r",
+      "role": "范围溅射",
+      "levels": [
+        { "level": 1, "unitId": "gemtd_r1", "damage": [4, 4], "attackIntervalSeconds": 1, "range": 500, "abilities": ["tower_jianshe1"] },
+        { "level": 2, "unitId": "gemtd_r11", "damage": [8, 8], "attackIntervalSeconds": 1, "range": 500, "abilities": ["tower_jianshe2"] },
+        { "level": 3, "unitId": "gemtd_r111", "damage": [12, 12], "attackIntervalSeconds": 1, "range": 500, "abilities": ["tower_jianshe3"] },
+        { "level": 4, "unitId": "gemtd_r1111", "damage": [24, 24], "attackIntervalSeconds": 1, "range": 500, "abilities": ["tower_jianshe4"] },
+        { "level": 5, "unitId": "gemtd_r11111", "damage": [48, 48], "attackIntervalSeconds": 1, "range": 500, "abilities": ["tower_jianshe5"] },
+        { "level": 6, "unitId": "gemtd_r111111", "damage": [150, 150], "attackIntervalSeconds": 1, "range": 500, "abilities": ["tower_jianshe6"] }
+      ]
+    },
+    {
+      "id": "emerald",
+      "name": "翡翠",
+      "sourcePrefix": "gemtd_g",
+      "role": "持续毒伤",
+      "levels": [
+        { "level": 1, "unitId": "gemtd_g1", "damage": [2, 2], "attackIntervalSeconds": 1, "range": 500, "abilities": ["tower_du1"] },
+        { "level": 2, "unitId": "gemtd_g11", "damage": [4, 4], "attackIntervalSeconds": 1, "range": 500, "abilities": ["tower_du2"] },
+        { "level": 3, "unitId": "gemtd_g111", "damage": [6, 6], "attackIntervalSeconds": 1, "range": 500, "abilities": ["tower_du3"] },
+        { "level": 4, "unitId": "gemtd_g1111", "damage": [8, 8], "attackIntervalSeconds": 1, "range": 500, "abilities": ["tower_du4"] },
+        { "level": 5, "unitId": "gemtd_g11111", "damage": [10, 10], "attackIntervalSeconds": 1, "range": 500, "abilities": ["tower_du5"] },
+        { "level": 6, "unitId": "gemtd_g111111", "damage": [12, 12], "attackIntervalSeconds": 1, "range": 500, "abilities": ["tower_du6"] }
+      ]
+    },
+    {
+      "id": "aquamarine",
+      "name": "海晶石",
+      "sourcePrefix": "gemtd_q",
+      "role": "高速攻击",
+      "note": "Dota 2 源码中的第八种基础宝石；多条合成配方依赖它。",
+      "levels": [
+        { "level": 1, "unitId": "gemtd_q1", "damage": [2, 2], "attackIntervalSeconds": 1, "range": 400, "abilities": ["tower_speed1"] },
+        { "level": 2, "unitId": "gemtd_q11", "damage": [4, 4], "attackIntervalSeconds": 0.9, "range": 400, "abilities": ["tower_speed1"] },
+        { "level": 3, "unitId": "gemtd_q111", "damage": [8, 8], "attackIntervalSeconds": 0.8, "range": 400, "abilities": ["tower_speed1"] },
+        { "level": 4, "unitId": "gemtd_q1111", "damage": [16, 16], "attackIntervalSeconds": 0.7, "range": 400, "abilities": ["tower_speed1"] },
+        { "level": 5, "unitId": "gemtd_q11111", "damage": [24, 24], "attackIntervalSeconds": 0.6, "range": 400, "abilities": ["tower_speed1"] },
+        { "level": 6, "unitId": "gemtd_q111111", "damage": [80, 80], "attackIntervalSeconds": 0.5, "range": 500, "abilities": ["tower_speed2"] }
+      ]
+    },
+    {
+      "id": "amethyst",
+      "name": "紫晶",
+      "sourcePrefix": "gemtd_p",
+      "role": "削弱护甲",
+      "levels": [
+        { "level": 1, "unitId": "gemtd_p1", "damage": [2, 2], "attackIntervalSeconds": 0.6, "range": 500, "abilities": ["tower_jianjia1"] },
+        { "level": 2, "unitId": "gemtd_p11", "damage": [4, 4], "attackIntervalSeconds": 0.6, "range": 500, "abilities": ["tower_jianjia2"] },
+        { "level": 3, "unitId": "gemtd_p111", "damage": [6, 6], "attackIntervalSeconds": 0.6, "range": 500, "abilities": ["tower_jianjia3"] },
+        { "level": 4, "unitId": "gemtd_p1111", "damage": [8, 8], "attackIntervalSeconds": 0.6, "range": 500, "abilities": ["tower_jianjia4"] },
+        { "level": 5, "unitId": "gemtd_p11111", "damage": [10, 10], "attackIntervalSeconds": 0.6, "range": 500, "abilities": ["tower_jianjia5"] },
+        { "level": 6, "unitId": "gemtd_p111111", "damage": [70, 70], "attackIntervalSeconds": 0.6, "range": 500, "abilities": ["tower_jianjia6"] }
+      ]
+    },
+    {
+      "id": "opal",
+      "name": "蛋白石",
+      "sourcePrefix": "gemtd_e",
+      "role": "攻击速度光环",
+      "levels": [
+        { "level": 1, "unitId": "gemtd_e1", "damage": [1, 1], "attackIntervalSeconds": 1, "range": 500, "abilities": ["tower_true_sight", "tower_speed_aura1"] },
+        { "level": 2, "unitId": "gemtd_e11", "damage": [2, 2], "attackIntervalSeconds": 1, "range": 500, "abilities": ["tower_true_sight", "tower_speed_aura2"] },
+        { "level": 3, "unitId": "gemtd_e111", "damage": [3, 3], "attackIntervalSeconds": 1, "range": 500, "abilities": ["tower_true_sight", "tower_speed_aura3"] },
+        { "level": 4, "unitId": "gemtd_e1111", "damage": [4, 4], "attackIntervalSeconds": 1, "range": 500, "abilities": ["tower_true_sight", "tower_speed_aura4"] },
+        { "level": 5, "unitId": "gemtd_e11111", "damage": [5, 5], "attackIntervalSeconds": 1, "range": 500, "abilities": ["tower_true_sight", "tower_speed_aura5"] },
+        { "level": 6, "unitId": "gemtd_e111111", "damage": [6, 6], "attackIntervalSeconds": 1, "range": 500, "abilities": ["tower_true_sight", "tower_speed_aura6"] }
+      ]
+    }
+  ],
+  "terrain": [
+    { "id": "rock", "name": "岩石", "blocksPath": true, "canAttack": false, "canProvideAura": false }
+  ],
+  "recipes": [
+    { "tier": "basic", "id": "gemtd_baiyin", "name": "白银", "ingredients": ["gemtd_b1", "gemtd_y1", "gemtd_d1"], "stats": { "damage": [40, 40], "attackIntervalSeconds": 1, "range": 600, "abilities": ["tower_slow2"] } },
+    { "tier": "basic", "id": "gemtd_kongqueshi", "name": "孔雀石", "ingredients": ["gemtd_e1", "gemtd_q1", "gemtd_g1"], "stats": { "damage": [15, 15], "attackIntervalSeconds": 0.8, "range": 600, "abilities": ["tower_fenliejian"] } },
+    { "tier": "basic", "id": "gemtd_xingcaihongbaoshi", "name": "星彩红宝石", "ingredients": ["gemtd_r11", "gemtd_r1", "gemtd_p1"], "stats": { "damage": [0, 0], "attackIntervalSeconds": 1, "range": 600, "abilities": ["tower_huiyao"] } },
+    { "tier": "basic", "id": "gemtd_yu", "name": "玉", "ingredients": ["gemtd_g111", "gemtd_e111", "gemtd_b11"], "stats": { "damage": [30, 30], "attackIntervalSeconds": 0.5, "range": 800, "abilities": ["tower_du4"] } },
+    { "tier": "basic", "id": "gemtd_furongshi", "name": "芙蓉石", "ingredients": ["gemtd_g1111", "gemtd_r111", "gemtd_p11"], "stats": { "damage": [15, 15], "attackIntervalSeconds": 0.6, "range": 500, "abilities": ["tower_zheyi"] } },
+
+    { "tier": "intermediate", "id": "gemtd_heianfeicui", "name": "黑暗翡翠", "ingredients": ["gemtd_g11111", "gemtd_b1111", "gemtd_y11"], "stats": { "damage": [80, 80], "attackIntervalSeconds": 0.5, "range": 700, "abilities": ["tower_10jiyun"] } },
+    { "tier": "intermediate", "id": "gemtd_huangcailanbaoshi", "name": "黄彩蓝宝石", "ingredients": ["gemtd_b11111", "gemtd_y1111", "gemtd_r1111"], "stats": { "damage": [20, 20], "attackIntervalSeconds": 1, "range": 600, "abilities": ["tower_lanbaoshi"] } },
+    { "tier": "intermediate", "id": "gemtd_palayibabixi", "name": "帕拉伊巴碧玺", "ingredients": ["gemtd_q11111", "gemtd_e1111", "gemtd_g11"], "stats": { "damage": [30, 30], "attackIntervalSeconds": 0.6, "range": 600, "abilities": ["tower_bixi"] } },
+    { "tier": "intermediate", "id": "gemtd_heisemaoyanshi", "name": "黑色猫眼石", "ingredients": ["gemtd_e11111", "gemtd_d1111", "gemtd_q111"], "stats": { "damage": [6, 6], "attackIntervalSeconds": 1, "range": 500, "abilities": ["tower_speed_aura5", "tower_true_sight", "tower_maoyan"] } },
+    { "tier": "intermediate", "id": "gemtd_jin", "name": "金", "ingredients": ["gemtd_p11111", "gemtd_p1111", "gemtd_d11"], "stats": { "damage": [100, 100], "attackIntervalSeconds": 0.8, "range": 600, "abilities": ["tower_jin"] } },
+    { "tier": "intermediate", "id": "gemtd_fenhongzuanshi", "name": "粉红钻石", "ingredients": ["gemtd_d11111", "gemtd_y111", "gemtd_d111"], "stats": { "damage": [50, 50], "attackIntervalSeconds": 0.75, "range": 800, "abilities": ["tower_baoji1", "tower_attack3"] } },
+    { "tier": "intermediate", "id": "gemtd_jixueshi", "name": "鸡血石", "ingredients": ["gemtd_r11111", "gemtd_q1111", "gemtd_p111"], "stats": { "damage": [35, 35], "attackIntervalSeconds": 1, "range": 700, "abilities": ["tower_shandianlian"] } },
+    { "tier": "intermediate", "id": "gemtd_you238", "name": "铀-238", "ingredients": ["gemtd_y11111", "gemtd_e11", "gemtd_b111"], "stats": { "damage": [120, 120], "attackIntervalSeconds": 0.7, "range": 700, "abilities": ["tower_fenliejian_you"] } },
+    { "tier": "intermediate", "id": "gemtd_baiyinqishi", "name": "白银骑士", "ingredients": ["gemtd_baiyin", "gemtd_q11", "gemtd_r111"], "stats": { "damage": [140, 140], "attackIntervalSeconds": 0.8, "range": 700, "abilities": ["tower_jianshe3", "tower_slow3"] } },
+    { "tier": "intermediate", "id": "gemtd_xianyandekongqueshi", "name": "鲜艳的孔雀石", "ingredients": ["gemtd_kongqueshi", "gemtd_d11", "gemtd_y111"], "stats": { "damage": [50, 50], "attackIntervalSeconds": 0.7, "range": 700, "abilities": ["tower_fenliejian_xianyan"] } },
+    { "tier": "intermediate", "id": "gemtd_xuehonghuoshan", "name": "血红火山", "ingredients": ["gemtd_xingcaihongbaoshi", "gemtd_r1111", "gemtd_p111"], "stats": { "damage": [0, 0], "attackIntervalSeconds": 1, "range": 600, "abilities": ["tower_huiyao2"] } },
+    { "tier": "intermediate", "id": "gemtd_shenhaizhenzhu", "name": "深海珍珠", "ingredients": ["gemtd_q1111", "gemtd_d1111", "gemtd_e11"], "stats": { "damage": [80, 80], "attackIntervalSeconds": 0.6, "range": 500, "abilities": ["tower_chenmoguanghuan"] } },
+    { "tier": "intermediate", "id": "gemtd_haiyangqingyu", "name": "海洋青玉", "ingredients": ["gemtd_yu", "gemtd_b1111", "gemtd_q111"], "stats": { "damage": [100, 100], "attackIntervalSeconds": 0.5, "range": 800, "abilities": ["tower_shechengguanghuan", "tower_du5"] } },
+
+    { "tier": "advanced", "id": "gemtd_jixiangdezhongguoyu", "name": "吉祥的中国玉", "ingredients": ["gemtd_yu", "gemtd_furongshi", "gemtd_g111"], "stats": { "damage": [30, 30], "attackIntervalSeconds": 0.5, "range": 900, "abilities": ["tower_du5", "tower_zhongguoyu", "tower_zheyi"] } },
+    { "tier": "advanced", "id": "gemtd_juxingfenhongzuanshi", "name": "巨型粉红钻石", "ingredients": ["gemtd_fenhongzuanshi", "gemtd_baiyinqishi", "gemtd_baiyin"], "stats": { "damage": [240, 240], "attackIntervalSeconds": 0.75, "range": 1000, "abilities": ["tower_jianshe4", "tower_baoji1", "tower_attack4"] } },
+    { "tier": "advanced", "id": "gemtd_you235", "name": "铀-235", "ingredients": ["gemtd_you238", "gemtd_xianyandekongqueshi", "gemtd_kongqueshi"], "stats": { "damage": [100, 100], "attackIntervalSeconds": 0.7, "range": 800, "abilities": ["tower_fenliejian_you"] } },
+    { "tier": "advanced", "id": "gemtd_jingxindiaozhuodepalayibabixi", "name": "精心雕琢的帕拉伊巴碧玺", "ingredients": ["gemtd_palayibabixi", "gemtd_heianfeicui", "gemtd_g11"], "stats": { "damage": [130, 130], "attackIntervalSeconds": 0.6, "range": 700, "abilities": ["tower_10jiyun", "tower_bixi2"] } },
+    { "tier": "advanced", "id": "gemtd_gudaidejixueshi", "name": "古代的鸡血石", "ingredients": ["gemtd_jixueshi", "gemtd_xuehonghuoshan", "gemtd_r11"], "stats": { "damage": [70, 70], "attackIntervalSeconds": 1, "range": 800, "abilities": ["tower_chazhuangshandian", "tower_huiyao2"] } },
+    { "tier": "advanced", "id": "gemtd_mirendeqingjinshi", "name": "迷人的青金石", "ingredients": ["gemtd_furongshi", "gemtd_p1111", "gemtd_y11"], "stats": { "damage": [30, 30], "attackIntervalSeconds": 0.6, "range": 800, "abilities": ["tower_zheyi2"] } },
+    { "tier": "advanced", "id": "gemtd_aijijin", "name": "埃及金", "ingredients": ["gemtd_jin", "gemtd_p11111", "gemtd_q11"], "stats": { "damage": [40, 40], "attackIntervalSeconds": 0.8, "range": 700, "abilities": ["tower_jin2", "tower_tanlan"] } },
+    { "tier": "advanced", "id": "gemtd_hongshanhu", "name": "红珊瑚", "ingredients": ["gemtd_heisemaoyanshi", "gemtd_shenhaizhenzhu", "gemtd_e1111"], "stats": { "damage": [120, 120], "attackIntervalSeconds": 0.6, "range": 500, "abilities": ["tower_speed_aura5", "tower_speed_aura4", "tower_true_sight", "tower_maoyan"] } },
+    { "tier": "advanced", "id": "gemtd_feicuimoxiang", "name": "翡翠魔像", "ingredients": ["gemtd_jin", "gemtd_heianfeicui", "gemtd_d111"], "stats": { "damage": [80, 80], "attackIntervalSeconds": 0.5, "range": 700, "abilities": ["tower_10jiyun", "tower_jin", "tower_5shihua"] } },
+    { "tier": "advanced", "id": "gemtd_huaguoshanxiandan", "name": "花果山仙丹", "ingredients": ["gemtd_haiyangqingyu", "gemtd_g1111", "gemtd_p11"], "stats": { "damage": [40, 40], "attackIntervalSeconds": 0.5, "range": 1000, "abilities": ["tower_du5", "tower_shechengguanghuan", "tower_jingzhun"] } },
+    { "tier": "advanced", "id": "gemtd_tianranzumulv", "name": "天然祖母绿", "ingredients": ["gemtd_shenhaizhenzhu", "gemtd_g11111", "gemtd_d111"], "stats": { "damage": [80, 80], "attackIntervalSeconds": 1, "range": 500, "abilities": ["tower_tianranzumulv"] } },
+    { "tier": "advanced", "id": "gemtd_haibao", "name": "海宝", "ingredients": ["gemtd_huangcailanbaoshi", "gemtd_jixueshi", "gemtd_b11111"], "stats": { "damage": [60, 60], "attackIntervalSeconds": 1, "range": 500, "abilities": ["tower_lanbaoshi", "tower_chain_frost"] } },
+
+    { "tier": "super", "id": "gemtd_keyinuoerguangmingzhishan", "name": "科依诺尔·光明之山", "ingredients": ["gemtd_juxingfenhongzuanshi", "gemtd_p111111", "gemtd_d111111"], "stats": { "damage": [660, 660], "attackIntervalSeconds": 0.6, "range": 1000, "abilities": ["tower_slow3", "tower_jianshe5", "tower_baoji1", "tower_attack6"] } },
+    { "tier": "super", "id": "gemtd_shuaibiankaipayou", "name": "衰变铀", "ingredients": ["gemtd_you235", "gemtd_q111111", "gemtd_y111111"], "stats": { "damage": [90, 90], "attackIntervalSeconds": 0.4, "range": 5000, "abilities": ["tower_attack5", "tower_fenliejian_you"] } },
+    { "tier": "super", "id": "gemtd_heiwangzihuangguanhongbaoshi", "name": "黑王子皇冠红宝石", "ingredients": ["gemtd_gudaidejixueshi", "gemtd_r111111", "gemtd_g111111"], "stats": { "damage": [70, 70], "attackIntervalSeconds": 1, "range": 800, "abilities": ["tower_chazhuangshandian", "tower_huiyao3"] } },
+    { "tier": "super", "id": "gemtd_xingguanglanbaoshi", "name": "星光蓝宝石", "ingredients": ["gemtd_huangcailanbaoshi", "gemtd_b111111", "gemtd_e111111"], "stats": { "damage": [20, 20], "attackIntervalSeconds": 1, "range": 600, "abilities": ["tower_speed_aura6", "tower_slow6", "tower_lanbaoshi2"] } },
+    { "tier": "super", "id": "gemtd_yijiazhishi", "name": "伊嘉之石", "ingredients": ["gemtd_hongshanhu", "gemtd_e111111", "gemtd_q111111"], "stats": { "damage": [6, 6], "attackIntervalSeconds": 1, "range": 500, "abilities": ["tower_chenmoguanghuan", "tower_maoyan", "tower_speed_aura_guichu", "tower_true_sight", "e10009"] } },
+    { "tier": "super", "id": "gemtd_huguoshenyishi", "name": "护国神翼石", "ingredients": ["gemtd_mirendeqingjinshi", "gemtd_y111111", "gemtd_r111111"], "stats": { "damage": [1, 1], "attackIntervalSeconds": 0.7, "range": 800, "abilities": ["tower_zheyi3", "tower_ranjin", "e10006"] } },
+    { "tier": "super", "id": "gemtd_jingangshikulinan", "name": "金刚石库利南", "ingredients": ["gemtd_huaguoshanxiandan", "gemtd_d111111", "gemtd_b111111"], "stats": { "damage": [2514, 2514], "attackIntervalSeconds": 1, "range": 1200, "abilities": ["tower_jingzhun", "tower_shechengguanghuan", "tower_attack6", "tower_baoji1", "e10005"] } },
+    { "tier": "super", "id": "gemtd_sililankazhixing", "name": "斯里兰卡之星", "ingredients": ["gemtd_jingxindiaozhuodepalayibabixi", "gemtd_g111111", "gemtd_p111111"], "stats": { "damage": [120, 120], "attackIntervalSeconds": 1, "range": 1200, "abilities": ["tower_du6", "tower_jianjia6", "tower_bixi2", "tower_jihan", "e10004"] } }
+  ]
+}

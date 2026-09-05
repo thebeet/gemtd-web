@@ -1,0 +1,5 @@
+node_modules
+dist
+.env.local
+.pnpm-store
+package-lock.json

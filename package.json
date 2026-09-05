@@ -1,0 +1,46 @@
+{
+  "name": "yjs-markdown-collab-demo",
+  "private": true,
+  "version": "0.0.1",
+  "packageManager": "pnpm@10.24.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "server": "tsx server/index.ts",
+    "start": "concurrently -k \"npm run server\" \"npm run dev\"",
+    "build": "vue-tsc -b && vite build",
+    "start:prod": "tsx server/index.ts",
+    "preview": "vite preview",
+    "generate:towers": "tsx scripts/generate-tower-models.ts"
+  },
+  "dependencies": {
+    "@vueuse/core": "^12.5.0",
+    "@codemirror/lang-markdown": "^6.3.2",
+    "@codemirror/state": "^6.5.2",
+    "@codemirror/view": "^6.36.3",
+    "dompurify": "^3.2.4",
+    "marked": "^15.0.6",
+    "three": "^0.173.0",
+    "vue": "^3.5.13",
+    "tsx": "^4.19.2",
+    "ws": "^8.18.0",
+    "y-codemirror.next": "^0.3.5",
+    "y-websocket": "^2.1.0",
+    "yjs": "^13.6.23"
+  },
+  "devDependencies": {
+    "@types/dompurify": "^3.0.5",
+    "@types/node": "^22.10.2",
+    "@types/three": "^0.173.0",
+    "@types/ws": "^8.5.13",
+    "@vue/tsconfig": "^0.7.0",
+    "@vitejs/plugin-vue": "^5.2.1",
+    "concurrently": "^9.1.0",
+    "typescript": "~5.7.2",
+    "vite": "^6.0.5",
+    "vue-tsc": "^2.2.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["esbuild"]
+  }
+}

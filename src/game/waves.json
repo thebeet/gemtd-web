@@ -1,0 +1,1970 @@
+{
+  "$schemaVersion": 1,
+  "metadata": {
+    "game": "Dota 2 GemTD",
+    "dataStatus": "public-source-derived",
+    "verifiedAt": "2026-08-27",
+    "source": {
+      "repository": "https://github.com/customgamessourcecode/GemTD",
+      "commit": "2ad93d0571901dc6afc62517874e947423757b5b",
+      "units": "scripts/npc/npc_units_custom.txt",
+      "wavesAndScaling": "scripts/vscripts/addon_game_mode.lua",
+      "localization": "resource/addon_schinese.txt"
+    },
+    "notice": "公开源码镜像最后提交于 2019-02-16，无法保证与当前 Steam Workshop 私有发布版本完全一致。表中为普通怪物（不含 0.25% 精英随机增幅）和默认波次数量。"
+  },
+  "rules": {
+    "defaultNormalCount": 10,
+    "defaultBossCount": 1,
+    "normalCountAdjustableRange": [
+      5,
+      20
+    ],
+    "eliteChance": 0.0025,
+    "armorAndMagicResistanceScaleWithPlayers": false,
+    "addedAbilityLevelEqualsPlayerCount": true,
+    "difficultyByPlayerCount": {
+      "1": {
+        "mode": "single/co-op 1P",
+        "healthMultiplier": 0.63,
+        "moveSpeedMultiplier": 0.85
+      },
+      "2": {
+        "mode": "co-op 2P",
+        "healthMultiplier": 2.65,
+        "moveSpeedMultiplier": 1.15
+      },
+      "3": {
+        "mode": "co-op 3P",
+        "healthMultiplier": 4.7,
+        "moveSpeedMultiplier": 1.35
+      },
+      "4": {
+        "mode": "co-op 4P",
+        "healthMultiplier": 6.7,
+        "moveSpeedMultiplier": 1.6
+      }
+    }
+  },
+  "waves": [
+    {
+      "wave": 1,
+      "unitId": "gemtd_kuangbaoyezhu",
+      "name": "狂暴野猪",
+      "count": 10,
+      "boss": false,
+      "movement": "ground",
+      "base": {
+        "health": 5,
+        "armor": 0,
+        "magicResistancePercent": 10,
+        "moveSpeed": 525
+      },
+      "byPlayerCount": {
+        "1": {
+          "health": 3.15,
+          "moveSpeed": 446.25
+        },
+        "2": {
+          "health": 13.25,
+          "moveSpeed": 603.75
+        },
+        "3": {
+          "health": 23.5,
+          "moveSpeed": 708.75
+        },
+        "4": {
+          "health": 33.5,
+          "moveSpeed": 840
+        }
+      },
+      "leakDamage": [
+        1,
+        3
+      ],
+      "abilities": []
+    },
+    {
+      "wave": 2,
+      "unitId": "gemtd_kuaidiqingwatiaotiao",
+      "name": "快递青蛙跳跳",
+      "count": 10,
+      "boss": false,
+      "movement": "ground",
+      "base": {
+        "health": 10,
+        "armor": 0,
+        "magicResistancePercent": 10,
+        "moveSpeed": 600
+      },
+      "byPlayerCount": {
+        "1": {
+          "health": 6.3,
+          "moveSpeed": 510
+        },
+        "2": {
+          "health": 26.5,
+          "moveSpeed": 690
+        },
+        "3": {
+          "health": 47,
+          "moveSpeed": 810
+        },
+        "4": {
+          "health": 67,
+          "moveSpeed": 960
+        }
+      },
+      "leakDamage": [
+        1,
+        3
+      ],
+      "abilities": []
+    },
+    {
+      "wave": 3,
+      "unitId": "gemtd_zhongchenggaoshanmaoniu",
+      "name": "忠诚高山牦牛",
+      "count": 10,
+      "boss": false,
+      "movement": "ground",
+      "base": {
+        "health": 20,
+        "armor": 0,
+        "magicResistancePercent": 10,
+        "moveSpeed": 525
+      },
+      "byPlayerCount": {
+        "1": {
+          "health": 12.6,
+          "moveSpeed": 446.25
+        },
+        "2": {
+          "health": 53,
+          "moveSpeed": 603.75
+        },
+        "3": {
+          "health": 94,
+          "moveSpeed": 708.75
+        },
+        "4": {
+          "health": 134,
+          "moveSpeed": 840
+        }
+      },
+      "leakDamage": [
+        1,
+        3
+      ],
+      "abilities": []
+    },
+    {
+      "wave": 4,
+      "unitId": "gemtd_moluokedejixiezhushou",
+      "name": "莫洛克的机械助手",
+      "count": 10,
+      "boss": false,
+      "movement": "ground",
+      "base": {
+        "health": 18,
+        "armor": 0,
+        "magicResistancePercent": 10,
+        "moveSpeed": 1000
+      },
+      "byPlayerCount": {
+        "1": {
+          "health": 11.34,
+          "moveSpeed": 850
+        },
+        "2": {
+          "health": 47.7,
+          "moveSpeed": 1150
+        },
+        "3": {
+          "health": 84.6,
+          "moveSpeed": 1350
+        },
+        "4": {
+          "health": 120.6,
+          "moveSpeed": 1600
+        }
+      },
+      "leakDamage": [
+        1,
+        3
+      ],
+      "abilities": []
+    },
+    {
+      "wave": 5,
+      "unitId": "gemtd_wuweizhihuan_fly",
+      "name": "无畏之獾",
+      "count": 10,
+      "boss": false,
+      "movement": "flying",
+      "base": {
+        "health": 22,
+        "armor": 0,
+        "magicResistancePercent": 10,
+        "moveSpeed": 500
+      },
+      "byPlayerCount": {
+        "1": {
+          "health": 13.86,
+          "moveSpeed": 425
+        },
+        "2": {
+          "health": 58.3,
+          "moveSpeed": 575
+        },
+        "3": {
+          "health": 103.4,
+          "moveSpeed": 675
+        },
+        "4": {
+          "health": 147.4,
+          "moveSpeed": 800
+        }
+      },
+      "leakDamage": [
+        1,
+        3
+      ],
+      "abilities": []
+    },
+    {
+      "wave": 6,
+      "unitId": "gemtd_shudunziranzhizhu",
+      "name": "树墩自然之助",
+      "count": 10,
+      "boss": false,
+      "movement": "ground",
+      "base": {
+        "health": 80,
+        "armor": 0,
+        "magicResistancePercent": 10,
+        "moveSpeed": 450
+      },
+      "byPlayerCount": {
+        "1": {
+          "health": 50.4,
+          "moveSpeed": 382.5
+        },
+        "2": {
+          "health": 212,
+          "moveSpeed": 517.5
+        },
+        "3": {
+          "health": 376,
+          "moveSpeed": 607.5
+        },
+        "4": {
+          "health": 536,
+          "moveSpeed": 720
+        }
+      },
+      "leakDamage": [
+        1,
+        3
+      ],
+      "abilities": []
+    },
+    {
+      "wave": 7,
+      "unitId": "gemtd_chaomengjuxi",
+      "name": "超萌巨蜥",
+      "count": 10,
+      "boss": false,
+      "movement": "ground",
+      "base": {
+        "health": 120,
+        "armor": 0,
+        "magicResistancePercent": 10,
+        "moveSpeed": 600
+      },
+      "byPlayerCount": {
+        "1": {
+          "health": 75.6,
+          "moveSpeed": 510
+        },
+        "2": {
+          "health": 318,
+          "moveSpeed": 690
+        },
+        "3": {
+          "health": 564,
+          "moveSpeed": 810
+        },
+        "4": {
+          "health": 804,
+          "moveSpeed": 960
+        }
+      },
+      "leakDamage": [
+        1,
+        3
+      ],
+      "abilities": []
+    },
+    {
+      "wave": 8,
+      "unitId": "gemtd_mengzhu",
+      "name": "萌蛛",
+      "count": 10,
+      "boss": false,
+      "movement": "ground",
+      "base": {
+        "health": 80,
+        "armor": 0,
+        "magicResistancePercent": 10,
+        "moveSpeed": 750
+      },
+      "byPlayerCount": {
+        "1": {
+          "health": 50.4,
+          "moveSpeed": 637.5
+        },
+        "2": {
+          "health": 212,
+          "moveSpeed": 862.5
+        },
+        "3": {
+          "health": 376,
+          "moveSpeed": 1012.5
+        },
+        "4": {
+          "health": 536,
+          "moveSpeed": 1200
+        }
+      },
+      "leakDamage": [
+        1,
+        3
+      ],
+      "abilities": []
+    },
+    {
+      "wave": 9,
+      "unitId": "gemtd_dashiqi",
+      "name": "达士奇",
+      "count": 10,
+      "boss": false,
+      "movement": "ground",
+      "base": {
+        "health": 180,
+        "armor": 0,
+        "magicResistancePercent": 10,
+        "moveSpeed": 600
+      },
+      "byPlayerCount": {
+        "1": {
+          "health": 113.4,
+          "moveSpeed": 510
+        },
+        "2": {
+          "health": 477,
+          "moveSpeed": 690
+        },
+        "3": {
+          "health": 846,
+          "moveSpeed": 810
+        },
+        "4": {
+          "health": 1206,
+          "moveSpeed": 960
+        }
+      },
+      "leakDamage": [
+        1,
+        3
+      ],
+      "abilities": [
+        "guai_shanbi"
+      ]
+    },
+    {
+      "wave": 10,
+      "unitId": "gemtd_buquzhanquan_boss",
+      "name": "不屈战犬",
+      "count": 1,
+      "boss": true,
+      "movement": "ground",
+      "base": {
+        "health": 2100,
+        "armor": 0,
+        "magicResistancePercent": 10,
+        "moveSpeed": 750
+      },
+      "byPlayerCount": {
+        "1": {
+          "health": 1323,
+          "moveSpeed": 637.5
+        },
+        "2": {
+          "health": 5565,
+          "moveSpeed": 862.5
+        },
+        "3": {
+          "health": 9870,
+          "moveSpeed": 1012.5
+        },
+        "4": {
+          "health": 14070,
+          "moveSpeed": 1200
+        }
+      },
+      "leakDamage": [
+        100,
+        100
+      ],
+      "abilities": []
+    },
+    {
+      "wave": 11,
+      "unitId": "gemtd_maorongrongdefeiyangyang",
+      "name": "喜羊羊",
+      "count": 10,
+      "boss": false,
+      "movement": "ground",
+      "base": {
+        "health": 300,
+        "armor": 4,
+        "magicResistancePercent": 10,
+        "moveSpeed": 525
+      },
+      "byPlayerCount": {
+        "1": {
+          "health": 189,
+          "moveSpeed": 446.25
+        },
+        "2": {
+          "health": 795,
+          "moveSpeed": 603.75
+        },
+        "3": {
+          "health": 1410,
+          "moveSpeed": 708.75
+        },
+        "4": {
+          "health": 2010,
+          "moveSpeed": 840
+        }
+      },
+      "leakDamage": [
+        1,
+        7
+      ],
+      "abilities": []
+    },
+    {
+      "wave": 12,
+      "unitId": "gemtd_caonimalama",
+      "name": "草泥马拉玛",
+      "count": 10,
+      "boss": false,
+      "movement": "ground",
+      "base": {
+        "health": 500,
+        "armor": 4,
+        "magicResistancePercent": 20,
+        "moveSpeed": 600
+      },
+      "byPlayerCount": {
+        "1": {
+          "health": 315,
+          "moveSpeed": 510
+        },
+        "2": {
+          "health": 1325,
+          "moveSpeed": 690
+        },
+        "3": {
+          "health": 2350,
+          "moveSpeed": 810
+        },
+        "4": {
+          "health": 3350,
+          "moveSpeed": 960
+        }
+      },
+      "leakDamage": [
+        1,
+        7
+      ],
+      "abilities": [
+        "guai_jiaoxieguanghuan"
+      ]
+    },
+    {
+      "wave": 13,
+      "unitId": "gemtd_fengtungongzhu",
+      "name": "丰臀公主",
+      "count": 10,
+      "boss": false,
+      "movement": "ground",
+      "base": {
+        "health": 900,
+        "armor": 4,
+        "magicResistancePercent": 10,
+        "moveSpeed": 600
+      },
+      "byPlayerCount": {
+        "1": {
+          "health": 567,
+          "moveSpeed": 510
+        },
+        "2": {
+          "health": 2385,
+          "moveSpeed": 690
+        },
+        "3": {
+          "health": 4230,
+          "moveSpeed": 810
+        },
+        "4": {
+          "health": 6030,
+          "moveSpeed": 960
+        }
+      },
+      "leakDamage": [
+        1,
+        7
+      ],
+      "abilities": []
+    },
+    {
+      "wave": 14,
+      "unitId": "gemtd_bugou",
+      "name": "布狗",
+      "count": 10,
+      "boss": false,
+      "movement": "ground",
+      "base": {
+        "health": 1100,
+        "armor": 4,
+        "magicResistancePercent": 10,
+        "moveSpeed": 600
+      },
+      "byPlayerCount": {
+        "1": {
+          "health": 693,
+          "moveSpeed": 510
+        },
+        "2": {
+          "health": 2915,
+          "moveSpeed": 690
+        },
+        "3": {
+          "health": 5170,
+          "moveSpeed": 810
+        },
+        "4": {
+          "health": 7370,
+          "moveSpeed": 960
+        }
+      },
+      "leakDamage": [
+        1,
+        7
+      ],
+      "abilities": [
+        "enemy_zheguang"
+      ]
+    },
+    {
+      "wave": 15,
+      "unitId": "gemtd_banzhuduizhang_fly",
+      "name": "斑竹队长",
+      "count": 10,
+      "boss": false,
+      "movement": "flying",
+      "base": {
+        "health": 270,
+        "armor": 4,
+        "magicResistancePercent": 10,
+        "moveSpeed": 600
+      },
+      "byPlayerCount": {
+        "1": {
+          "health": 170.1,
+          "moveSpeed": 510
+        },
+        "2": {
+          "health": 715.5,
+          "moveSpeed": 690
+        },
+        "3": {
+          "health": 1269,
+          "moveSpeed": 810
+        },
+        "4": {
+          "health": 1809,
+          "moveSpeed": 960
+        }
+      },
+      "leakDamage": [
+        1,
+        7
+      ],
+      "abilities": []
+    },
+    {
+      "wave": 16,
+      "unitId": "gemtd_xunjiemotong",
+      "name": "迅捷魔童",
+      "count": 10,
+      "boss": false,
+      "movement": "ground",
+      "base": {
+        "health": 950,
+        "armor": 4,
+        "magicResistancePercent": 10,
+        "moveSpeed": 800
+      },
+      "byPlayerCount": {
+        "1": {
+          "health": 598.5,
+          "moveSpeed": 680
+        },
+        "2": {
+          "health": 2517.5,
+          "moveSpeed": 920
+        },
+        "3": {
+          "health": 4465,
+          "moveSpeed": 1080
+        },
+        "4": {
+          "health": 6365,
+          "moveSpeed": 1280
+        }
+      },
+      "leakDamage": [
+        1,
+        7
+      ],
+      "abilities": []
+    },
+    {
+      "wave": 17,
+      "unitId": "gemtd_yonggandexiaoji",
+      "name": "勇敢的小鸡",
+      "count": 10,
+      "boss": false,
+      "movement": "ground",
+      "base": {
+        "health": 2200,
+        "armor": 4,
+        "magicResistancePercent": 50,
+        "moveSpeed": 600
+      },
+      "byPlayerCount": {
+        "1": {
+          "health": 1386,
+          "moveSpeed": 510
+        },
+        "2": {
+          "health": 5830,
+          "moveSpeed": 690
+        },
+        "3": {
+          "health": 10340,
+          "moveSpeed": 810
+        },
+        "4": {
+          "health": 14740,
+          "moveSpeed": 960
+        }
+      },
+      "leakDamage": [
+        1,
+        7
+      ],
+      "abilities": [
+        "enemy_bukeqinfan"
+      ]
+    },
+    {
+      "wave": 18,
+      "unitId": "gemtd_xiaobajie",
+      "name": "小八戒",
+      "count": 10,
+      "boss": false,
+      "movement": "ground",
+      "base": {
+        "health": 3300,
+        "armor": 4,
+        "magicResistancePercent": 10,
+        "moveSpeed": 675
+      },
+      "byPlayerCount": {
+        "1": {
+          "health": 2079,
+          "moveSpeed": 573.75
+        },
+        "2": {
+          "health": 8745,
+          "moveSpeed": 776.25
+        },
+        "3": {
+          "health": 15510,
+          "moveSpeed": 911.25
+        },
+        "4": {
+          "health": 22110,
+          "moveSpeed": 1080
+        }
+      },
+      "leakDamage": [
+        1,
+        7
+      ],
+      "abilities": [
+        "guai_jiaoxieguanghuan",
+        "riki_permanent_invisibility"
+      ]
+    },
+    {
+      "wave": 19,
+      "unitId": "gemtd_shentu",
+      "name": "神兔",
+      "count": 10,
+      "boss": false,
+      "movement": "ground",
+      "base": {
+        "health": 2800,
+        "armor": 4,
+        "magicResistancePercent": 10,
+        "moveSpeed": 1000
+      },
+      "byPlayerCount": {
+        "1": {
+          "health": 1764,
+          "moveSpeed": 850
+        },
+        "2": {
+          "health": 7420,
+          "moveSpeed": 1150
+        },
+        "3": {
+          "health": 13160,
+          "moveSpeed": 1350
+        },
+        "4": {
+          "health": 18760,
+          "moveSpeed": 1600
+        }
+      },
+      "leakDamage": [
+        1,
+        7
+      ],
+      "abilities": [
+        "runrunrun"
+      ]
+    },
+    {
+      "wave": 20,
+      "unitId": "gemtd_huxiaotao_boss",
+      "name": "胡小桃",
+      "count": 1,
+      "boss": true,
+      "movement": "ground",
+      "base": {
+        "health": 30000,
+        "armor": 0,
+        "magicResistancePercent": 10,
+        "moveSpeed": 900
+      },
+      "byPlayerCount": {
+        "1": {
+          "health": 18900,
+          "moveSpeed": 765
+        },
+        "2": {
+          "health": 79500,
+          "moveSpeed": 1035
+        },
+        "3": {
+          "health": 141000,
+          "moveSpeed": 1215
+        },
+        "4": {
+          "health": 201000,
+          "moveSpeed": 1440
+        }
+      },
+      "leakDamage": [
+        100,
+        100
+      ],
+      "abilities": []
+    },
+    {
+      "wave": 21,
+      "unitId": "gemtd_siwangsiliezhe",
+      "name": "死亡撕裂者",
+      "count": 10,
+      "boss": false,
+      "movement": "ground",
+      "base": {
+        "health": 7500,
+        "armor": 8,
+        "magicResistancePercent": 10,
+        "moveSpeed": 675
+      },
+      "byPlayerCount": {
+        "1": {
+          "health": 4725,
+          "moveSpeed": 573.75
+        },
+        "2": {
+          "health": 19875,
+          "moveSpeed": 776.25
+        },
+        "3": {
+          "health": 35250,
+          "moveSpeed": 911.25
+        },
+        "4": {
+          "health": 50250,
+          "moveSpeed": 1080
+        }
+      },
+      "leakDamage": [
+        1,
+        11
+      ],
+      "abilities": []
+    },
+    {
+      "wave": 22,
+      "unitId": "gemtd_yaorenxiangluoke",
+      "name": "咬人箱洛克",
+      "count": 10,
+      "boss": false,
+      "movement": "ground",
+      "base": {
+        "health": 11000,
+        "armor": 8,
+        "magicResistancePercent": 10,
+        "moveSpeed": 600
+      },
+      "byPlayerCount": {
+        "1": {
+          "health": 6930,
+          "moveSpeed": 510
+        },
+        "2": {
+          "health": 29150,
+          "moveSpeed": 690
+        },
+        "3": {
+          "health": 51700,
+          "moveSpeed": 810
+        },
+        "4": {
+          "health": 73700,
+          "moveSpeed": 960
+        }
+      },
+      "leakDamage": [
+        1,
+        11
+      ],
+      "abilities": [
+        "enemy_high_armor"
+      ]
+    },
+    {
+      "wave": 23,
+      "unitId": "gemtd_tiezuiyaorenxiang",
+      "name": "铁嘴咬人箱",
+      "count": 10,
+      "boss": false,
+      "movement": "ground",
+      "base": {
+        "health": 10000,
+        "armor": 8,
+        "magicResistancePercent": 10,
+        "moveSpeed": 625
+      },
+      "byPlayerCount": {
+        "1": {
+          "health": 6300,
+          "moveSpeed": 531.25
+        },
+        "2": {
+          "health": 26500,
+          "moveSpeed": 718.75
+        },
+        "3": {
+          "health": 47000,
+          "moveSpeed": 843.75
+        },
+        "4": {
+          "health": 67000,
+          "moveSpeed": 1000
+        }
+      },
+      "leakDamage": [
+        1,
+        11
+      ],
+      "abilities": [
+        "enemy_wumian",
+        "enemy_zheguang"
+      ]
+    },
+    {
+      "wave": 24,
+      "unitId": "gemtd_jixieyaorenxiang",
+      "name": "机械咬人箱",
+      "count": 10,
+      "boss": false,
+      "movement": "ground",
+      "base": {
+        "health": 15000,
+        "armor": 8,
+        "magicResistancePercent": 10,
+        "moveSpeed": 675
+      },
+      "byPlayerCount": {
+        "1": {
+          "health": 9450,
+          "moveSpeed": 573.75
+        },
+        "2": {
+          "health": 39750,
+          "moveSpeed": 776.25
+        },
+        "3": {
+          "health": 70500,
+          "moveSpeed": 911.25
+        },
+        "4": {
+          "health": 100500,
+          "moveSpeed": 1080
+        }
+      },
+      "leakDamage": [
+        1,
+        11
+      ],
+      "abilities": [
+        "shredder_reactive_armor"
+      ]
+    },
+    {
+      "wave": 25,
+      "unitId": "gemtd_fengbaozhizikesaier_fly",
+      "name": "风暴之子柯塞尔",
+      "count": 10,
+      "boss": false,
+      "movement": "flying",
+      "base": {
+        "health": 4500,
+        "armor": 8,
+        "magicResistancePercent": 10,
+        "moveSpeed": 400
+      },
+      "byPlayerCount": {
+        "1": {
+          "health": 2835,
+          "moveSpeed": 340
+        },
+        "2": {
+          "health": 11925,
+          "moveSpeed": 460
+        },
+        "3": {
+          "health": 21150,
+          "moveSpeed": 540
+        },
+        "4": {
+          "health": 30150,
+          "moveSpeed": 640
+        }
+      },
+      "leakDamage": [
+        1,
+        11
+      ],
+      "abilities": [
+        "enemy_high_armor"
+      ]
+    },
+    {
+      "wave": 26,
+      "unitId": "gemtd_niepanhuolieniao",
+      "name": "涅槃火烈鸟",
+      "count": 10,
+      "boss": false,
+      "movement": "ground",
+      "base": {
+        "health": 10000,
+        "armor": 8,
+        "magicResistancePercent": 10,
+        "moveSpeed": 900
+      },
+      "byPlayerCount": {
+        "1": {
+          "health": 6300,
+          "moveSpeed": 765
+        },
+        "2": {
+          "health": 26500,
+          "moveSpeed": 1035
+        },
+        "3": {
+          "health": 47000,
+          "moveSpeed": 1215
+        },
+        "4": {
+          "health": 67000,
+          "moveSpeed": 1440
+        }
+      },
+      "leakDamage": [
+        1,
+        11
+      ],
+      "abilities": []
+    },
+    {
+      "wave": 27,
+      "unitId": "gemtd_lgddejinmengmeng_fly",
+      "name": "LGD的金萌萌",
+      "count": 10,
+      "boss": false,
+      "movement": "flying",
+      "base": {
+        "health": 3000,
+        "armor": 8,
+        "magicResistancePercent": 50,
+        "moveSpeed": 625
+      },
+      "byPlayerCount": {
+        "1": {
+          "health": 1890,
+          "moveSpeed": 531.25
+        },
+        "2": {
+          "health": 7950,
+          "moveSpeed": 718.75
+        },
+        "3": {
+          "health": 14100,
+          "moveSpeed": 843.75
+        },
+        "4": {
+          "health": 20100,
+          "moveSpeed": 1000
+        }
+      },
+      "leakDamage": [
+        1,
+        11
+      ],
+      "abilities": [
+        "enemy_bukeqinfan"
+      ]
+    },
+    {
+      "wave": 28,
+      "unitId": "gemtd_youniekesizhinu_fly",
+      "name": "尤涅克斯之怒",
+      "count": 10,
+      "boss": false,
+      "movement": "flying",
+      "base": {
+        "health": 4000,
+        "armor": 8,
+        "magicResistancePercent": 10,
+        "moveSpeed": 750
+      },
+      "byPlayerCount": {
+        "1": {
+          "health": 2520,
+          "moveSpeed": 637.5
+        },
+        "2": {
+          "health": 10600,
+          "moveSpeed": 862.5
+        },
+        "3": {
+          "health": 18800,
+          "moveSpeed": 1012.5
+        },
+        "4": {
+          "health": 26800,
+          "moveSpeed": 1200
+        }
+      },
+      "leakDamage": [
+        1,
+        11
+      ],
+      "abilities": [
+        "shredder_reactive_armor"
+      ]
+    },
+    {
+      "wave": 29,
+      "unitId": "gemtd_feihuxia_fly",
+      "name": "飞狐侠",
+      "count": 10,
+      "boss": false,
+      "movement": "flying",
+      "base": {
+        "health": 6000,
+        "armor": 8,
+        "magicResistancePercent": 10,
+        "moveSpeed": 775
+      },
+      "byPlayerCount": {
+        "1": {
+          "health": 3780,
+          "moveSpeed": 658.75
+        },
+        "2": {
+          "health": 15900,
+          "moveSpeed": 891.25
+        },
+        "3": {
+          "health": 28200,
+          "moveSpeed": 1046.25
+        },
+        "4": {
+          "health": 40200,
+          "moveSpeed": 1240
+        }
+      },
+      "leakDamage": [
+        1,
+        11
+      ],
+      "abilities": [
+        "guai_shanbi",
+        "enemy_zheguang"
+      ]
+    },
+    {
+      "wave": 30,
+      "unitId": "gemtd_mofafeitanxiaoemo_boss_fly",
+      "name": "魔法飞毯小恶魔",
+      "count": 1,
+      "boss": true,
+      "movement": "flying",
+      "base": {
+        "health": 80000,
+        "armor": 0,
+        "magicResistancePercent": 10,
+        "moveSpeed": 750
+      },
+      "byPlayerCount": {
+        "1": {
+          "health": 50400,
+          "moveSpeed": 637.5
+        },
+        "2": {
+          "health": 212000,
+          "moveSpeed": 862.5
+        },
+        "3": {
+          "health": 376000,
+          "moveSpeed": 1012.5
+        },
+        "4": {
+          "health": 536000,
+          "moveSpeed": 1200
+        }
+      },
+      "leakDamage": [
+        100,
+        100
+      ],
+      "abilities": []
+    },
+    {
+      "wave": 31,
+      "unitId": "gemtd_modianxiaolong",
+      "name": "魔典小龙",
+      "count": 10,
+      "boss": false,
+      "movement": "ground",
+      "base": {
+        "health": 20000,
+        "armor": 12,
+        "magicResistancePercent": 10,
+        "moveSpeed": 900
+      },
+      "byPlayerCount": {
+        "1": {
+          "health": 12600,
+          "moveSpeed": 765
+        },
+        "2": {
+          "health": 53000,
+          "moveSpeed": 1035
+        },
+        "3": {
+          "health": 94000,
+          "moveSpeed": 1215
+        },
+        "4": {
+          "health": 134000,
+          "moveSpeed": 1440
+        }
+      },
+      "leakDamage": [
+        1,
+        15
+      ],
+      "abilities": [
+        "enemy_zheguang"
+      ]
+    },
+    {
+      "wave": 32,
+      "unitId": "gemtd_xiaoshayu",
+      "name": "小鲨鱼",
+      "count": 10,
+      "boss": false,
+      "movement": "ground",
+      "base": {
+        "health": 95000,
+        "armor": 12,
+        "magicResistancePercent": 10,
+        "moveSpeed": 600
+      },
+      "byPlayerCount": {
+        "1": {
+          "health": 59850,
+          "moveSpeed": 510
+        },
+        "2": {
+          "health": 251750,
+          "moveSpeed": 690
+        },
+        "3": {
+          "health": 446500,
+          "moveSpeed": 810
+        },
+        "4": {
+          "health": 636500,
+          "moveSpeed": 960
+        }
+      },
+      "leakDamage": [
+        1,
+        15
+      ],
+      "abilities": [
+        "enemy_recharge"
+      ]
+    },
+    {
+      "wave": 33,
+      "unitId": "gemtd_feijiangxiaobao",
+      "name": "飞僵小宝",
+      "count": 10,
+      "boss": false,
+      "movement": "ground",
+      "base": {
+        "health": 85000,
+        "armor": 12,
+        "magicResistancePercent": 10,
+        "moveSpeed": 700
+      },
+      "byPlayerCount": {
+        "1": {
+          "health": 53550,
+          "moveSpeed": 595
+        },
+        "2": {
+          "health": 225250,
+          "moveSpeed": 805
+        },
+        "3": {
+          "health": 399500,
+          "moveSpeed": 945
+        },
+        "4": {
+          "health": 569500,
+          "moveSpeed": 1120
+        }
+      },
+      "leakDamage": [
+        1,
+        15
+      ],
+      "abilities": [
+        "enemy_wumian",
+        "enemy_shanshuo"
+      ]
+    },
+    {
+      "wave": 34,
+      "unitId": "gemtd_shangjinbaobao_fly",
+      "name": "赏金宝宝",
+      "count": 10,
+      "boss": false,
+      "movement": "flying",
+      "base": {
+        "health": 19000,
+        "armor": 12,
+        "magicResistancePercent": 10,
+        "moveSpeed": 725
+      },
+      "byPlayerCount": {
+        "1": {
+          "health": 11970,
+          "moveSpeed": 616.25
+        },
+        "2": {
+          "health": 50350,
+          "moveSpeed": 833.75
+        },
+        "3": {
+          "health": 89300,
+          "moveSpeed": 978.75
+        },
+        "4": {
+          "health": 127300,
+          "moveSpeed": 1160
+        }
+      },
+      "leakDamage": [
+        1,
+        15
+      ],
+      "abilities": [
+        "guai_shanbi"
+      ]
+    },
+    {
+      "wave": 35,
+      "unitId": "gemtd_jinyinhuling_fly",
+      "name": "金银狐灵",
+      "count": 10,
+      "boss": false,
+      "movement": "flying",
+      "base": {
+        "health": 9500,
+        "armor": 12,
+        "magicResistancePercent": 10,
+        "moveSpeed": 700
+      },
+      "byPlayerCount": {
+        "1": {
+          "health": 5985,
+          "moveSpeed": 595
+        },
+        "2": {
+          "health": 25175,
+          "moveSpeed": 805
+        },
+        "3": {
+          "health": 44650,
+          "moveSpeed": 945
+        },
+        "4": {
+          "health": 63650,
+          "moveSpeed": 1120
+        }
+      },
+      "leakDamage": [
+        1,
+        15
+      ],
+      "abilities": []
+    },
+    {
+      "wave": 36,
+      "unitId": "gemtd_cuihua",
+      "name": "翠花",
+      "count": 10,
+      "boss": false,
+      "movement": "ground",
+      "base": {
+        "health": 60000,
+        "armor": 12,
+        "magicResistancePercent": 10,
+        "moveSpeed": 1000
+      },
+      "byPlayerCount": {
+        "1": {
+          "health": 37800,
+          "moveSpeed": 850
+        },
+        "2": {
+          "health": 159000,
+          "moveSpeed": 1150
+        },
+        "3": {
+          "health": 282000,
+          "moveSpeed": 1350
+        },
+        "4": {
+          "health": 402000,
+          "moveSpeed": 1600
+        }
+      },
+      "leakDamage": [
+        1,
+        15
+      ],
+      "abilities": []
+    },
+    {
+      "wave": 37,
+      "unitId": "gemtd_xiaobaihu",
+      "name": "小白虎",
+      "count": 10,
+      "boss": false,
+      "movement": "ground",
+      "base": {
+        "health": 160000,
+        "armor": 12,
+        "magicResistancePercent": 10,
+        "moveSpeed": 1200
+      },
+      "byPlayerCount": {
+        "1": {
+          "health": 100800,
+          "moveSpeed": 1020
+        },
+        "2": {
+          "health": 424000,
+          "moveSpeed": 1380
+        },
+        "3": {
+          "health": 752000,
+          "moveSpeed": 1620
+        },
+        "4": {
+          "health": 1072000,
+          "moveSpeed": 1920
+        }
+      },
+      "leakDamage": [
+        1,
+        15
+      ],
+      "abilities": [
+        "enemy_shanshuo"
+      ]
+    },
+    {
+      "wave": 38,
+      "unitId": "gemtd_xiaoxingyue",
+      "name": "小星月",
+      "count": 10,
+      "boss": false,
+      "movement": "ground",
+      "base": {
+        "health": 150000,
+        "armor": 12,
+        "magicResistancePercent": 10,
+        "moveSpeed": 1000
+      },
+      "byPlayerCount": {
+        "1": {
+          "health": 94500,
+          "moveSpeed": 850
+        },
+        "2": {
+          "health": 397500,
+          "moveSpeed": 1150
+        },
+        "3": {
+          "health": 705000,
+          "moveSpeed": 1350
+        },
+        "4": {
+          "health": 1005000,
+          "moveSpeed": 1600
+        }
+      },
+      "leakDamage": [
+        1,
+        15
+      ],
+      "abilities": []
+    },
+    {
+      "wave": 39,
+      "unitId": "gemtd_liangqiyuhai_fly",
+      "name": "两栖鱼孩",
+      "count": 10,
+      "boss": false,
+      "movement": "flying",
+      "base": {
+        "health": 55000,
+        "armor": 12,
+        "magicResistancePercent": 10,
+        "moveSpeed": 600
+      },
+      "byPlayerCount": {
+        "1": {
+          "health": 34650,
+          "moveSpeed": 510
+        },
+        "2": {
+          "health": 145750,
+          "moveSpeed": 690
+        },
+        "3": {
+          "health": 258500,
+          "moveSpeed": 810
+        },
+        "4": {
+          "health": 368500,
+          "moveSpeed": 960
+        }
+      },
+      "leakDamage": [
+        1,
+        15
+      ],
+      "abilities": [
+        "enemy_bukeqinfan",
+        "tidehunter_kraken_shell",
+        "guai_shanbi"
+      ]
+    },
+    {
+      "wave": 40,
+      "unitId": "gemtd_guixiaoxieling_boss_fly",
+      "name": "诡笑邪灵",
+      "count": 1,
+      "boss": true,
+      "movement": "flying",
+      "base": {
+        "health": 330000,
+        "armor": 0,
+        "magicResistancePercent": 10,
+        "moveSpeed": 800
+      },
+      "byPlayerCount": {
+        "1": {
+          "health": 207900,
+          "moveSpeed": 680
+        },
+        "2": {
+          "health": 874500,
+          "moveSpeed": 920
+        },
+        "3": {
+          "health": 1551000,
+          "moveSpeed": 1080
+        },
+        "4": {
+          "health": 2211000,
+          "moveSpeed": 1280
+        }
+      },
+      "leakDamage": [
+        100,
+        100
+      ],
+      "abilities": [
+        "tidehunter_kraken_shell"
+      ]
+    },
+    {
+      "wave": 41,
+      "unitId": "gemtd_weilanlong",
+      "name": "蔚蓝龙",
+      "count": 10,
+      "boss": false,
+      "movement": "ground",
+      "base": {
+        "health": 170000,
+        "armor": 16,
+        "magicResistancePercent": 40,
+        "moveSpeed": 1300
+      },
+      "byPlayerCount": {
+        "1": {
+          "health": 107100,
+          "moveSpeed": 1105
+        },
+        "2": {
+          "health": 450500,
+          "moveSpeed": 1495
+        },
+        "3": {
+          "health": 799000,
+          "moveSpeed": 1755
+        },
+        "4": {
+          "health": 1139000,
+          "moveSpeed": 2080
+        }
+      },
+      "leakDamage": [
+        1,
+        19
+      ],
+      "abilities": [
+        "enemy_high_armor"
+      ]
+    },
+    {
+      "wave": 42,
+      "unitId": "gemtd_saodiekupu_fly",
+      "name": "骚蝶库普",
+      "count": 10,
+      "boss": false,
+      "movement": "flying",
+      "base": {
+        "health": 15000,
+        "armor": 16,
+        "magicResistancePercent": 10,
+        "moveSpeed": 700
+      },
+      "byPlayerCount": {
+        "1": {
+          "health": 9450,
+          "moveSpeed": 595
+        },
+        "2": {
+          "health": 39750,
+          "moveSpeed": 805
+        },
+        "3": {
+          "health": 70500,
+          "moveSpeed": 945
+        },
+        "4": {
+          "health": 100500,
+          "moveSpeed": 1120
+        }
+      },
+      "leakDamage": [
+        1,
+        19
+      ],
+      "abilities": [
+        "runrunrun"
+      ]
+    },
+    {
+      "wave": 43,
+      "unitId": "gemtd_maomaoyu",
+      "name": "毛毛鱼",
+      "count": 10,
+      "boss": false,
+      "movement": "ground",
+      "base": {
+        "health": 190000,
+        "armor": 16,
+        "magicResistancePercent": 40,
+        "moveSpeed": 800
+      },
+      "byPlayerCount": {
+        "1": {
+          "health": 119700,
+          "moveSpeed": 680
+        },
+        "2": {
+          "health": 503500,
+          "moveSpeed": 920
+        },
+        "3": {
+          "health": 893000,
+          "moveSpeed": 1080
+        },
+        "4": {
+          "health": 1273000,
+          "moveSpeed": 1280
+        }
+      },
+      "leakDamage": [
+        1,
+        19
+      ],
+      "abilities": [
+        "enemy_bukeqinfan",
+        "guai_shanbi",
+        "enemy_recharge"
+      ]
+    },
+    {
+      "wave": 44,
+      "unitId": "gemtd_xiaomogu",
+      "name": "小蘑菇",
+      "count": 10,
+      "boss": false,
+      "movement": "ground",
+      "base": {
+        "health": 200000,
+        "armor": 16,
+        "magicResistancePercent": 10,
+        "moveSpeed": 500
+      },
+      "byPlayerCount": {
+        "1": {
+          "health": 126000,
+          "moveSpeed": 425
+        },
+        "2": {
+          "health": 530000,
+          "moveSpeed": 575
+        },
+        "3": {
+          "health": 940000,
+          "moveSpeed": 675
+        },
+        "4": {
+          "health": 1340000,
+          "moveSpeed": 800
+        }
+      },
+      "leakDamage": [
+        1,
+        19
+      ],
+      "abilities": [
+        "enemy_shanshuo"
+      ]
+    },
+    {
+      "wave": 45,
+      "unitId": "gemtd_jiujiu_fly",
+      "name": "啾啾",
+      "count": 10,
+      "boss": false,
+      "movement": "flying",
+      "base": {
+        "health": 120000,
+        "armor": 16,
+        "magicResistancePercent": 10,
+        "moveSpeed": 2000
+      },
+      "byPlayerCount": {
+        "1": {
+          "health": 75600,
+          "moveSpeed": 1700
+        },
+        "2": {
+          "health": 318000,
+          "moveSpeed": 2300
+        },
+        "3": {
+          "health": 564000,
+          "moveSpeed": 2700
+        },
+        "4": {
+          "health": 804000,
+          "moveSpeed": 3200
+        }
+      },
+      "leakDamage": [
+        1,
+        19
+      ],
+      "abilities": [
+        "guai_jiaoxieguanghuan"
+      ]
+    },
+    {
+      "wave": 46,
+      "unitId": "gemtd_siwangxintu",
+      "name": "死亡信徒",
+      "count": 10,
+      "boss": false,
+      "movement": "ground",
+      "base": {
+        "health": 550000,
+        "armor": 32,
+        "magicResistancePercent": 20,
+        "moveSpeed": 800
+      },
+      "byPlayerCount": {
+        "1": {
+          "health": 346500,
+          "moveSpeed": 680
+        },
+        "2": {
+          "health": 1457500,
+          "moveSpeed": 920
+        },
+        "3": {
+          "health": 2585000,
+          "moveSpeed": 1080
+        },
+        "4": {
+          "health": 3685000,
+          "moveSpeed": 1280
+        }
+      },
+      "leakDamage": [
+        1,
+        19
+      ],
+      "abilities": []
+    },
+    {
+      "wave": 47,
+      "unitId": "gemtd_jilamofashi",
+      "name": "基拉魔法师",
+      "count": 10,
+      "boss": false,
+      "movement": "ground",
+      "base": {
+        "health": 550000,
+        "armor": 16,
+        "magicResistancePercent": 60,
+        "moveSpeed": 600
+      },
+      "byPlayerCount": {
+        "1": {
+          "health": 346500,
+          "moveSpeed": 510
+        },
+        "2": {
+          "health": 1457500,
+          "moveSpeed": 690
+        },
+        "3": {
+          "health": 2585000,
+          "moveSpeed": 810
+        },
+        "4": {
+          "health": 3685000,
+          "moveSpeed": 960
+        }
+      },
+      "leakDamage": [
+        1,
+        19
+      ],
+      "abilities": [
+        "enemy_bukeqinfan",
+        "runrunrun"
+      ]
+    },
+    {
+      "wave": 48,
+      "unitId": "gemtd_xiaofeixia_fly",
+      "name": "小飞侠",
+      "count": 10,
+      "boss": false,
+      "movement": "flying",
+      "base": {
+        "health": 50000,
+        "armor": 16,
+        "magicResistancePercent": 10,
+        "moveSpeed": 500
+      },
+      "byPlayerCount": {
+        "1": {
+          "health": 31500,
+          "moveSpeed": 425
+        },
+        "2": {
+          "health": 132500,
+          "moveSpeed": 575
+        },
+        "3": {
+          "health": 235000,
+          "moveSpeed": 675
+        },
+        "4": {
+          "health": 335000,
+          "moveSpeed": 800
+        }
+      },
+      "leakDamage": [
+        1,
+        19
+      ],
+      "abilities": [
+        "guai_jiaoxieguanghuan",
+        "guai_shanbi"
+      ]
+    },
+    {
+      "wave": 49,
+      "unitId": "gemtd_juniaoduoduo",
+      "name": "巨鸟多多",
+      "count": 10,
+      "boss": false,
+      "movement": "ground",
+      "base": {
+        "health": 650000,
+        "armor": 32,
+        "magicResistancePercent": 70,
+        "moveSpeed": 700
+      },
+      "byPlayerCount": {
+        "1": {
+          "health": 409500,
+          "moveSpeed": 595
+        },
+        "2": {
+          "health": 1722500,
+          "moveSpeed": 805
+        },
+        "3": {
+          "health": 3055000,
+          "moveSpeed": 945
+        },
+        "4": {
+          "health": 4355000,
+          "moveSpeed": 1120
+        }
+      },
+      "leakDamage": [
+        1,
+        19
+      ],
+      "abilities": [
+        "tidehunter_kraken_shell",
+        "enemy_recharge"
+      ]
+    },
+    {
+      "wave": 50,
+      "unitId": "gemtd_roushan_boss_fly",
+      "name": "肉山宝宝",
+      "count": 1,
+      "boss": true,
+      "movement": "flying",
+      "base": {
+        "health": 1000000,
+        "armor": 16,
+        "magicResistancePercent": 20,
+        "moveSpeed": 1000
+      },
+      "byPlayerCount": {
+        "1": {
+          "health": 630000,
+          "moveSpeed": 850
+        },
+        "2": {
+          "health": 2650000,
+          "moveSpeed": 1150
+        },
+        "3": {
+          "health": 4700000,
+          "moveSpeed": 1350
+        },
+        "4": {
+          "health": 6700000,
+          "moveSpeed": 1600
+        }
+      },
+      "leakDamage": [
+        100,
+        100
+      ],
+      "abilities": [
+        "tidehunter_kraken_shell"
+      ]
+    }
+  ]
+}
