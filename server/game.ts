@@ -4,7 +4,16 @@ import towerData from '../src/game/tower.json' with { type: 'json' }
 import waveData from '../src/game/waves.json' with { type: 'json' }
 
 type Cell = { x: number; z: number }
-type TowerInput = { key: string; type: string; quality?: number; unitId?: string; name?: string; temporary?: boolean; abilities?: string[] }
+type TowerInput = {
+  key: string
+  type: string
+  quality?: number
+  unitId?: string
+  name?: string
+  temporary?: boolean
+  abilities?: string[]
+  mvpStacks?: number
+}
 type DamageType = 'physical' | 'magical'
 type DotEffect = {
   kind: 'poison'
@@ -80,7 +89,25 @@ type PendingDotLog = {
   greedProc?: boolean
   at: number
 }
-type Projectile = { id: number; towerKey: string; targetId: number; fromX: number; fromZ: number; damage: number; launchAt: number; impactAt: number; color: string }
+type Projectile = {
+  id: number
+  towerKey: string
+  targetId: number
+  fromX: number
+  fromZ: number
+  damage: number
+  launchAt: number
+  impactAt: number
+  color: string
+  style: 'orb' | 'laser' | 'arrow'
+}
+type FxSegment = { fromX: number; fromZ: number; toX: number; toZ: number }
+type FxEvent = {
+  id: number
+  kind: 'lightning'
+  color: string
+  segments: FxSegment[]
+}
 type TowerMeta = { type: string; quality?: number; unitId?: string; name?: string }
 type TowerCombatStats = { damage: number; kills: number }
 type CombatEventDebuff = { kind: 'slow' | 'armorBreak' | 'poison' | 'stun'; level: number }
@@ -134,8 +161,13 @@ type Room = {
   combatEvents: CombatEvent[]
   pendingCombatEvents: CombatEvent[]
   combatEventSeq: number
+  pendingFxEvents: FxEvent[]
+  fxEventSeq: number
   pendingDotLogs: Map<string, PendingDotLog>
   testCombat: boolean
+  testSpawnQueue: Array<{ config: TestMonsterConfig; remaining: number }>
+  pendingMvpAward?: { key: string; mvpStacks: number; name?: string; wave: number }
+  forceBroadcast?: boolean
 }
 
 const GRID_SIZE = 37
@@ -173,7 +205,7 @@ function roomFor(id: string) {
       clients: new Set(), phase: 'build', wave: 1, tick: 0, lives: 100, kills: 0, gold: 0, experience: 0, heroLevel: 1, playerCount: 1,
       towers: [], combatTowers: [], monsters: [], projectiles: [], route: [], flyingRoute: routePoints, spawned: 0, spawnCount: 0, nextSpawnAt: 0,
       resetVersion: 0, resetKind: 'none', currentCombatWave: 0, towerMeta: new Map(), lineageParent: new Map(), waveStats: new Map(),
-      combatEvents: [], pendingCombatEvents: [], combatEventSeq: 0, pendingDotLogs: new Map(), testCombat: false,
+      combatEvents: [], pendingCombatEvents: [], combatEventSeq: 0, pendingFxEvents: [], fxEventSeq: 0, pendingDotLogs: new Map(), testCombat: false, testSpawnQueue: [],
     }
     rooms.set(id, room)
   }
@@ -221,6 +253,11 @@ function recordTowerCombat(room: Room, towerKey: string, damage: number, killed:
   stats.set(towerKey, entry)
 }
 
+function isLiveCombatCell(room: Room, key: string) {
+  const live = room.towers.find((tower) => tower.key === key)
+  return Boolean(live && live.type !== 'rock' && !live.temporary)
+}
+
 function buildLeaderboard(room: Room, waveFilter: number | 'all') {
   const aggregated = new Map<string, TowerCombatStats>()
   const waves = waveFilter === 'all' ? [...room.waveStats.keys()].sort((a, b) => a - b) : [waveFilter]
@@ -228,7 +265,9 @@ function buildLeaderboard(room: Room, waveFilter: number | 'all') {
     const waveMap = room.waveStats.get(wave)
     if (!waveMap) continue
     for (const [key, stats] of waveMap) {
-      const root = resolveRoot(room, key)
+      // Cell keys are reused. If this cell currently holds a real tower, keep damage on
+      // that cell — do not follow stale combine lineage from an earlier occupant.
+      const root = isLiveCombatCell(room, key) ? key : resolveRoot(room, key)
       const entry = aggregated.get(root) || { damage: 0, kills: 0 }
       entry.damage += stats.damage
       entry.kills += stats.kills
@@ -236,13 +275,39 @@ function buildLeaderboard(room: Room, waveFilter: number | 'all') {
     }
   }
   return [...aggregated.entries()]
-    .map(([key, stats]) => ({
-      key,
-      ...stats,
-      ...(room.towerMeta.get(key) || { type: 'unknown' }),
-    }))
+    .map(([key, stats]) => {
+      const live = room.towers.find((tower) => tower.key === key)
+      return {
+        key,
+        ...stats,
+        ...(room.towerMeta.get(key) || { type: 'unknown' }),
+        mvpStacks: live ? clampMvpStacks(live.mvpStacks) : undefined,
+      }
+    })
     .filter((entry) => entry.damage > 0 || entry.kills > 0)
     .sort((left, right) => right.damage - left.damage || right.kills - left.kills || left.key.localeCompare(right.key))
+}
+
+function awardWaveMvp(room: Room) {
+  if (room.testCombat || !room.currentCombatWave) return undefined
+  const ranking = buildLeaderboard(room, room.currentCombatWave)
+  for (const entry of ranking) {
+    const live = room.towers.find((tower) => tower.key === entry.key)
+    if (!live || live.type === 'rock' || live.temporary) continue
+    const stacks = clampMvpStacks(live.mvpStacks)
+    if (stacks >= MVP_MAX_STACKS) continue
+    const mvpStacks = stacks + 1
+    live.mvpStacks = mvpStacks
+    const meta = room.towerMeta.get(entry.key)
+    if (meta) room.towerMeta.set(entry.key, { ...meta })
+    return {
+      key: entry.key,
+      mvpStacks,
+      name: live.name || meta?.name || recipes.get(live.unitId || live.type)?.name,
+      wave: room.currentCombatWave,
+    }
+  }
+  return undefined
 }
 
 function availableLeaderboardWaves(room: Room) {
@@ -352,6 +417,8 @@ function multiTargetLimit(abilities: readonly string[]) {
 
 const BASE_ATTACK_SPEED = 100
 const SPEED_AURA_BONUS_BY_LEVEL = [0, 20, 30, 40, 50, 60, 70] as const
+const SPEED_AURA_RADIUS_CELLS = 664 / DOTA_UNITS_PER_CELL
+const GUICHU_SPEED_AURA_RADIUS_CELLS = 200 / DOTA_UNITS_PER_CELL
 const ATTACK_BONUS_BY_LEVEL = [0, 20, 40, 80, 160, 320, 640] as const
 
 function attackBonusFromAbilities(abilities: readonly string[]) {
@@ -361,21 +428,6 @@ function attackBonusFromAbilities(abilities: readonly string[]) {
     if (!match) continue
     const level = Number(match[1])
     if (level >= 1 && level <= 6) best = Math.max(best, ATTACK_BONUS_BY_LEVEL[level] ?? 0)
-  }
-  return best
-}
-
-function speedAuraBonusFromAbilities(abilities: readonly string[]) {
-  let best = 0
-  for (const abilityId of abilities) {
-    if (abilityId === 'tower_speed_aura_guichu') {
-      best = Math.max(best, 80)
-      continue
-    }
-    const match = abilityId.match(/^tower_speed_aura(\d+)$/)
-    if (!match) continue
-    const level = Number(match[1])
-    if (level >= 1 && level <= 6) best = Math.max(best, SPEED_AURA_BONUS_BY_LEVEL[level])
   }
   return best
 }
@@ -398,11 +450,21 @@ function computeSpeedAuraBonus(target: TowerRuntime, providers: TowerRuntime[]) 
   for (const provider of providers) {
     const stats = towerStats(provider)
     if (!stats) continue
-    const providerBonus = speedAuraBonusFromAbilities(stats.abilities)
-    if (!providerBonus) continue
-    const auraRange = stats.range / DOTA_UNITS_PER_CELL
-    if (Math.hypot(provider.x - target.x, provider.z - target.z) > auraRange) continue
-    bonus += providerBonus
+    const distance = Math.hypot(provider.x - target.x, provider.z - target.z)
+    let levelBonus = 0
+    let guichuBonus = 0
+    for (const abilityId of stats.abilities) {
+      if (abilityId === 'tower_speed_aura_guichu') {
+        guichuBonus = 80
+        continue
+      }
+      const match = abilityId.match(/^tower_speed_aura(\d+)$/)
+      if (!match) continue
+      const level = Number(match[1])
+      if (level >= 1 && level <= 6) levelBonus = Math.max(levelBonus, SPEED_AURA_BONUS_BY_LEVEL[level])
+    }
+    if (levelBonus && distance <= SPEED_AURA_RADIUS_CELLS) bonus += levelBonus
+    if (guichuBonus && distance <= GUICHU_SPEED_AURA_RADIUS_CELLS) bonus += guichuBonus
   }
   return bonus
 }
@@ -427,6 +489,10 @@ function computeRangeAuraBonus(target: TowerRuntime, providers: TowerRuntime[]) 
 }
 
 const MAOYAN_AURA_RADIUS_CELLS = 500 / DOTA_UNITS_PER_CELL
+const MVP_MAX_STACKS = 10
+const MVP_BONUS_PER_STACK = 0.1
+const MVP_AURA_RADIUS_CELLS = 500 / DOTA_UNITS_PER_CELL
+const MVP_AURA_BONUS = MVP_MAX_STACKS * MVP_BONUS_PER_STACK
 const CHENMO_AURA_RADIUS_CELLS = 600 / DOTA_UNITS_PER_CELL
 const JINGZHUN_AURA_RADIUS_CELLS = 300 / DOTA_UNITS_PER_CELL
 const BIXI_AURA_RADIUS_CELLS = 800 / DOTA_UNITS_PER_CELL
@@ -467,6 +533,31 @@ function computeMaoyanDamageMultiplier(target: TowerRuntime, providers: TowerRun
     stacks += 1
   }
   return 1 + stacks * 0.5
+}
+
+function clampMvpStacks(value: unknown) {
+  const stacks = Math.floor(Number(value) || 0)
+  return Math.max(0, Math.min(MVP_MAX_STACKS, stacks))
+}
+
+function mvpSelfBonus(stacks: number) {
+  return clampMvpStacks(stacks) * MVP_BONUS_PER_STACK
+}
+
+function computeMvpAuraBonus(target: TowerRuntime, providers: TowerRuntime[]) {
+  let best = 0
+  for (const provider of providers) {
+    if (provider.key === target.key) continue
+    if (clampMvpStacks(provider.mvpStacks) < MVP_MAX_STACKS) continue
+    if (Math.hypot(provider.x - target.x, provider.z - target.z) > MVP_AURA_RADIUS_CELLS) continue
+    best = Math.max(best, MVP_AURA_BONUS)
+  }
+  return best
+}
+
+function computeDamageMultiplier(tower: TowerRuntime, providers: TowerRuntime[]) {
+  const maoyanBonus = computeMaoyanDamageMultiplier(tower, providers) - 1
+  return 1 + maoyanBonus + mvpSelfBonus(tower.mvpStacks || 0) + computeMvpAuraBonus(tower, providers)
 }
 
 function computeJingzhunCannotMiss(target: TowerRuntime, providers: TowerRuntime[]) {
@@ -563,6 +654,7 @@ function validTowerLayout(raw: unknown): TowerInput[] {
       abilities: Array.isArray(tower.abilities)
         ? tower.abilities.filter((id): id is string => typeof id === 'string' && id.length > 0)
         : undefined,
+      mvpStacks: clampMvpStacks(tower.mvpStacks) || undefined,
     }]
   })
 }
@@ -608,7 +700,7 @@ function buildCombatTowers(towers: TowerInput[]) {
     const totalSpeedBonus = selfSpeedBonus + speedAuraBonus
     return {
       ...tower,
-      damageMultiplier: computeMaoyanDamageMultiplier(tower, combatTowers),
+      damageMultiplier: computeDamageMultiplier(tower, combatTowers),
       cannotMiss: computeJingzhunCannotMiss(tower, combatTowers),
       magicPierce: computeChenmoMagicPierce(tower, combatTowers),
       speedAuraBonus: totalSpeedBonus,
@@ -901,6 +993,7 @@ const MAX_COMBAT_EVENTS = 800
 function clearCombatEvents(room: Room) {
   room.combatEvents = []
   room.pendingCombatEvents = []
+  room.pendingFxEvents = []
   room.pendingDotLogs.clear()
 }
 
@@ -912,6 +1005,18 @@ function pushCombatEvent(room: Room, event: Omit<CombatEvent, 'id'>) {
     const overflow = room.combatEvents.length - MAX_COMBAT_EVENTS
     room.combatEvents.splice(0, overflow)
   }
+}
+
+const LIGHTNING_FX_COLOR = '#ff3b3b'
+
+function pushLightningFx(room: Room, segments: FxSegment[]) {
+  if (!segments.length) return
+  room.pendingFxEvents.push({
+    id: ++room.fxEventSeq,
+    kind: 'lightning',
+    color: LIGHTNING_FX_COLOR,
+    segments,
+  })
 }
 
 function recordCombatHit(
@@ -949,6 +1054,23 @@ function recordCombatHit(
 
 function projectileColor(type: string) {
   return ({ ruby: '#ff6b57', topaz: '#ffd75f', sapphire: '#68b8ff', emerald: '#62e398', aquamarine: '#68f2e5', amethyst: '#c78cff', diamond: '#e8ffff', opal: '#ff9ed1' } as Record<string, string>)[type] || '#fff3a5'
+}
+
+const LASER_TOWER_IDS = new Set([
+  'gemtd_baiyin',
+  'gemtd_baiyinqishi',
+  'gemtd_fenhongzuanshi',
+  'gemtd_juxingfenhongzuanshi',
+  'gemtd_keyinuoerguangmingzhishan',
+])
+const LASER_PROJECTILE_COLOR = '#c8f0ff'
+const ARROW_PROJECTILE_COLOR = '#5dff8a'
+
+function projectileStyleForTower(type: string, multiLimit: number): 'orb' | 'laser' | 'arrow' {
+  if (LASER_TOWER_IDS.has(type)) return 'laser'
+  // Split-shot towers (孔雀石 / 铀 / 黄玉等): green arrow + trail.
+  if (multiLimit > 1) return 'arrow'
+  return 'orb'
 }
 
 function experienceForWave(wave: number) {
@@ -1012,6 +1134,7 @@ function resetWave(room: Room) {
   room.spawnCount = 0
   room.nextSpawnAt = 0
   room.testCombat = false
+  room.testSpawnQueue = []
   clearCombatEvents(room)
   room.resetVersion++
   room.resetKind = 'wave'
@@ -1221,8 +1344,10 @@ function applyMonsterDamage(
   options: { source?: 'hit' | 'dot' } = {},
 ) {
   if (damage <= 0 || target.hp <= 0) return
+  // Maoyan / MVP (and MVP aura) amplify every damage source from this tower.
+  const scaledDamage = damage * (tower.damageMultiplier || 1)
   // Evasion / refraction already handled in resolveProjectiles for hits.
-  const actualDamage = mitigateDamage(target, now, damage, damageType, {
+  const actualDamage = mitigateDamage(target, now, scaledDamage, damageType, {
     pierceMagicImmune: damageType === 'magical' && tower.magicPierce,
     room,
   })
@@ -1271,7 +1396,8 @@ function launchAttacks(room: Room, now: number) {
     for (const target of candidates.slice(0, shots)) {
       if (target.untouchable) appliedUntouchable = true
       const distance = Math.hypot(target.x - tower.x, target.z - tower.z)
-      const damage = rollCritDamage(tower.damage * tower.damageMultiplier, abilities)
+      const damage = rollCritDamage(tower.damage, abilities)
+      const style = projectileStyleForTower(tower.type, tower.multiTargetLimit)
       room.projectiles.push({
         id: nextProjectileId++,
         towerKey: tower.key,
@@ -1280,8 +1406,14 @@ function launchAttacks(room: Room, now: number) {
         fromZ: tower.z,
         damage,
         launchAt: now,
-        impactAt: now + Math.max(120, distance / PROJECTILE_CELLS_PER_SECOND * 1000),
-        color: projectileColor(tower.type),
+        // Lasers resolve immediately (next tick), no travel delay by distance.
+        impactAt: style === 'laser' ? now : now + Math.max(120, distance / PROJECTILE_CELLS_PER_SECOND * 1000),
+        color: style === 'laser'
+          ? LASER_PROJECTILE_COLOR
+          : style === 'arrow'
+            ? ARROW_PROJECTILE_COLOR
+            : projectileColor(tower.type),
+        style,
       })
     }
     if (appliedUntouchable) applyUntouchableToTower(tower, now)
@@ -1308,6 +1440,14 @@ function tryForkedLightning(room: Room, now: number, tower: TowerRuntime, abilit
       return leftDist - rightDist || left.id - right.id
     })
     .slice(0, FORK_LIGHTNING_TARGETS)
+  if (!targets.length) return
+  const segments: FxSegment[] = targets.map((target) => ({
+    fromX: tower.x,
+    fromZ: tower.z,
+    toX: target.x,
+    toZ: target.z,
+  }))
+  pushLightningFx(room, segments)
   for (const target of targets) {
     applyMonsterDamage(room, now, tower, target, FORK_LIGHTNING_DAMAGE, 'magical', [])
   }
@@ -1337,12 +1477,24 @@ function tryChainLightning(room: Room, now: number, tower: TowerRuntime, primary
   if (!abilities.includes('tower_shandianlian')) return
   if (Math.random() >= CHAIN_LIGHTNING_CHANCE) return
   const hit = new Set<number>([primary.id])
+  const path: Monster[] = []
   let current: Monster | undefined = primary
   for (let jump = 0; jump < CHAIN_LIGHTNING_JUMPS && current; jump++) {
+    path.push(current)
     applyMonsterDamage(room, now, tower, current, CHAIN_LIGHTNING_DAMAGE, 'magical', [])
     hit.add(current.id)
     current = nearestChainTarget(room, current, hit, CHAIN_LIGHTNING_RADIUS_CELLS, true)
   }
+  if (!path.length) return
+  const segments: FxSegment[] = []
+  let prevX = tower.x
+  let prevZ = tower.z
+  for (const monster of path) {
+    segments.push({ fromX: prevX, fromZ: prevZ, toX: monster.x, toZ: monster.z })
+    prevX = monster.x
+    prevZ = monster.z
+  }
+  pushLightningFx(room, segments)
 }
 
 function tryChainFrost(room: Room, now: number, tower: TowerRuntime, primary: Monster, abilities: readonly string[]) {
@@ -1524,6 +1676,31 @@ function spawnMonster(room: Room, now: number) {
   room.nextSpawnAt = now + (wave.boss ? 1000 : 700)
 }
 
+function testSpawnIntervalMs(config: TestMonsterConfig) {
+  return config.boss ? 1000 : 700
+}
+
+function spawnQueuedTestMonster(room: Room, now: number) {
+  const job = room.testSpawnQueue[0]
+  if (!job || job.remaining <= 0) {
+    if (job) room.testSpawnQueue.shift()
+    room.nextSpawnAt = room.testSpawnQueue.length ? now : Number.MAX_SAFE_INTEGER
+    return
+  }
+  const monster = createTestMonster(room, now, job.config)
+  if (!monster) {
+    room.spawnCount = Math.max(room.spawned, room.spawnCount - job.remaining)
+    room.testSpawnQueue.shift()
+    room.nextSpawnAt = room.testSpawnQueue.length ? now : Number.MAX_SAFE_INTEGER
+    return
+  }
+  room.monsters.push(monster)
+  room.spawned++
+  job.remaining--
+  if (job.remaining <= 0) room.testSpawnQueue.shift()
+  room.nextSpawnAt = now + testSpawnIntervalMs(job.config)
+}
+
 type TestMonsterConfig = {
   name?: string
   hp?: number
@@ -1533,6 +1710,7 @@ type TestMonsterConfig = {
   flying?: boolean
   boss?: boolean
   abilities?: string[]
+  count?: number
 }
 
 const ALLOWED_TEST_ABILITIES = new Set([
@@ -1605,7 +1783,10 @@ function createTestMonster(room: Room, now: number, config: TestMonsterConfig): 
 function updateRoom(room: Room, now: number) {
   if (room.phase !== 'combat') return
   const wave = waveData.waves[Math.max(0, Math.min(waveData.waves.length - 1, room.wave - 1))]
-  if (room.spawned < room.spawnCount && now >= room.nextSpawnAt) spawnMonster(room, now)
+  if (room.spawned < room.spawnCount && now >= room.nextSpawnAt) {
+    if (room.testCombat) spawnQueuedTestMonster(room, now)
+    else spawnMonster(room, now)
+  }
   const tickSeconds = tickFractionSeconds()
   for (const monster of room.monsters) {
     const path = monster.flying ? room.flyingRoute : room.route
@@ -1634,13 +1815,18 @@ function updateRoom(room: Room, now: number) {
   launchAttacks(room, now)
   if (room.spawned >= room.spawnCount && room.monsters.length === 0 && room.projectiles.length === 0) {
     flushPendingDotLogs(room, true)
+    if (!room.testCombat) {
+      room.pendingMvpAward = awardWaveMvp(room)
+    }
     room.phase = 'build'
     room.combatTowers = []
     if (room.testCombat) {
       room.testCombat = false
+      room.testSpawnQueue = []
     } else {
       room.wave = Math.min(waveData.waves.length, room.wave + 1)
     }
+    room.forceBroadcast = true
   }
 }
 
@@ -1744,6 +1930,7 @@ function monsterSnapshotStatuses(monster: Monster, now: number): Array<{ id: str
 
 function snapshot(room: Room) {
   const newCombatEvents = room.pendingCombatEvents.splice(0)
+  const fxEvents = room.pendingFxEvents.splice(0)
   const now = Date.now()
   return {
     type: 'snapshot', serverTime: now, phase: room.phase, wave: room.wave, tick: room.tick,
@@ -1774,8 +1961,10 @@ function snapshot(room: Room) {
       bountyExperience: experienceForWave(room.wave),
       statuses: monsterSnapshotStatuses(monster, now),
     })),
-    projectiles: room.projectiles.map(({ id, towerKey, targetId, fromX, fromZ, launchAt, impactAt, color }) => ({ id, towerKey, targetId, fromX, fromZ, launchAt, impactAt, color })),
+    projectiles: room.projectiles.map(({ id, towerKey, targetId, fromX, fromZ, launchAt, impactAt, color, style }) => ({ id, towerKey, targetId, fromX, fromZ, launchAt, impactAt, color, style })),
     newCombatEvents,
+    fxEvents,
+    mvpAward: room.pendingMvpAward,
   }
 }
 
@@ -1785,6 +1974,8 @@ function send(connection: WebSocket, value: unknown) {
 
 function broadcast(room: Room) {
   const payload = JSON.stringify(snapshot(room))
+  // Deliver the award once with the build-phase snapshot, then clear.
+  room.pendingMvpAward = undefined
   room.clients.forEach((connection) => { if (connection.readyState === connection.OPEN) connection.send(payload) })
 }
 
@@ -1897,17 +2088,32 @@ export function handleGameConnection(connection: WebSocket, request: IncomingMes
           room.projectiles = []
           room.spawned = 0
           room.spawnCount = 0
+          room.testSpawnQueue = []
           room.nextSpawnAt = Number.MAX_SAFE_INTEGER
           room.testCombat = true
           room.phase = 'combat'
         }
         if (room.phase !== 'combat') return send(connection, { type: 'error', message: '无法生成测试怪物' })
         if (!room.route.length) return send(connection, { type: 'error', message: '当前没有可用路线' })
-        const monster = createTestMonster(room, now, config)
-        if (!monster) return send(connection, { type: 'error', message: '测试怪物生成失败' })
-        room.monsters.push(monster)
-        room.spawned += 1
-        room.spawnCount += 1
+        const count = Math.max(1, Math.min(100, Math.round(Number(config.count) || 1)))
+        const path = Boolean(config.flying) ? room.flyingRoute : room.route
+        if (!path.length) return send(connection, { type: 'error', message: '测试怪物生成失败' })
+        if (!room.testCombat) {
+          // Mid-wave cheat: keep legacy immediate spawn so wave spawn cadence is untouched.
+          for (let i = 0; i < count; i++) {
+            const monster = createTestMonster(room, now, config)
+            if (!monster) break
+            room.monsters.push(monster)
+            room.spawned += 1
+            room.spawnCount += 1
+          }
+          return broadcast(room)
+        }
+        const wasIdle = room.spawned >= room.spawnCount
+        room.testSpawnQueue.push({ config, remaining: count })
+        room.spawnCount += count
+        // Same cadence as normal waves: short delay before first, then 700ms (boss 1000ms).
+        if (wasIdle) room.nextSpawnAt = now + 350
         return broadcast(room)
       }
     } catch { send(connection, { type: 'error', message: '无法识别游戏指令' }) }
@@ -1920,6 +2126,9 @@ setInterval(() => {
   rooms.forEach((room) => {
     room.tick++
     updateRoom(room, now)
-    if (room.tick % SNAPSHOT_EVERY_TICKS === 0) broadcast(room)
+    if (room.forceBroadcast || room.tick % SNAPSHOT_EVERY_TICKS === 0) {
+      room.forceBroadcast = false
+      broadcast(room)
+    }
   })
 }, TICK_MS).unref()

@@ -10,7 +10,6 @@ export const BASE_TOWER_FOOTPRINT_SCALE = .52
 export const BASE_TOWER_MIN_HEIGHT_SCALE = .52
 export const ROCK_HEIGHT_SCALE = BASE_TOWER_MIN_HEIGHT_SCALE * (2 / 3)
 export const ROCK_BODY_Y = 0.42 * (2 / 3)
-export const ROCK_DETAIL_PANEL_Y = 0.9 * (2 / 3)
 export const BASE_TOWER_HEIGHT_STEP = .12
 /** Target world footprint diameter for recipe towers (cells are ~1 unit). */
 export const RECIPE_TOWER_FOOTPRINT = .92

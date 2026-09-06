@@ -129,6 +129,7 @@ const testMonsterForm = ref({
   armor: 0,
   magicResistancePercent: 0,
   moveSpeed: 450,
+  count: 1,
   flying: false,
   boss: false,
   abilities: [] as string[],
@@ -155,6 +156,7 @@ function submitTestMonster() {
     return
   }
   const form = testMonsterForm.value
+  const count = Math.max(1, Math.min(100, Math.round(Number(form.count) || 1)))
   spawnTestMonster({
     name: form.name.trim() || '测试怪物',
     hp: Math.max(1, Math.round(Number(form.hp) || 1)),
@@ -164,9 +166,10 @@ function submitTestMonster() {
     flying: form.flying,
     boss: form.boss,
     abilities: [...form.abilities],
+    count,
   })
   toggleTestMonster(false)
-  showPlacementMessage('已生成测试怪物')
+  showPlacementMessage(count > 1 ? `已生成 ${count} 只测试怪物` : '已生成测试怪物')
 }
 
 function selectMazeLayout(id: string) {
@@ -235,6 +238,8 @@ const {
   selectedTowerRecord,
   selectedTowerStats,
   selectedEffectiveDamage,
+  selectedMvpStacks,
+  selectedMvpMultiplier,
   selectedEffectiveAttackInterval,
   selectedEffectiveRange,
   selectedTowerAbilities,
@@ -692,6 +697,10 @@ onBeforeUnmount(() => destroyCollab())
             <span>移速</span>
             <input v-model.number="testMonsterForm.moveSpeed" type="number" min="50" max="2000" step="10" />
           </label>
+          <label>
+            <span>数量</span>
+            <input v-model.number="testMonsterForm.count" type="number" min="1" max="100" step="1" />
+          </label>
           <div class="test-monster-flags">
             <label class="test-monster-check">
               <input v-model="testMonsterForm.flying" type="checkbox" />
@@ -746,6 +755,7 @@ onBeforeUnmount(() => destroyCollab())
             <span class="leaderboard-stats">
               <b>{{ Math.round(entry.damage) }}</b> 伤害
               <em>{{ entry.kills }} 击杀</em>
+              <em v-if="entry.mvpStacks">MVP×{{ entry.mvpStacks }}</em>
             </span>
           </li>
         </ol>
@@ -912,6 +922,14 @@ onBeforeUnmount(() => destroyCollab())
           <div><dt>伤害</dt><dd>{{ (selectedEffectiveDamage ?? selectedTowerStats.damage)[0] }}–{{ (selectedEffectiveDamage ?? selectedTowerStats.damage)[1] }}</dd></div>
           <div><dt>攻击间隔</dt><dd>{{ formatAttackIntervalSeconds(selectedEffectiveAttackInterval ?? selectedTowerStats.attackIntervalSeconds) }} 秒</dd></div>
           <div><dt>射程</dt><dd>{{ selectedEffectiveRange ?? selectedTowerStats.range }}</dd></div>
+          <div v-if="selectedMvpStacks > 0">
+            <dt>MVP</dt>
+            <dd>
+              {{ selectedMvpStacks }}/10
+              · 伤害 ×{{ selectedMvpMultiplier.toFixed(2) }}
+              <template v-if="selectedMvpStacks >= 10"> · 光环</template>
+            </dd>
+          </div>
         </dl>
         <div v-if="selectedTowerAbilities.length" class="tower-abilities">
           <div

@@ -13,7 +13,6 @@ import {
   RECIPE_TOWER_HEIGHT,
   RESERVED_ZONE_COLOR,
   ROCK_BODY_Y,
-  ROCK_DETAIL_PANEL_Y,
   ROCK_HEIGHT_SCALE,
   rockType,
   routePoints,
@@ -37,6 +36,7 @@ import {
 } from '../game/towers'
 import { createTowerPrototype } from '../game/towerModels'
 import type {
+  BattleFxEvent,
   BattleMonster,
   BattleProjectile,
   BattleSnapshot,
@@ -104,7 +104,7 @@ export function useGameScene(options: {
   const host = ref<HTMLDivElement>()
   const detailPanel = ref<HTMLElement>()
   const monsterDetailPanel = ref<HTMLElement>()
-  const towerDetailStyle = ref<CSSProperties>({ left: '50%', top: '50%', transform: 'translateX(-50%)' })
+  const towerDetailStyle = ref<CSSProperties>({ top: '16px', right: '16px', left: 'auto', transform: 'none' })
   const monsterDetailStyle = ref<CSSProperties>({ left: '50%', top: '50%', transform: 'translateX(-50%)' })
   const routeLength = ref(0)
 
@@ -155,6 +155,9 @@ export function useGameScene(options: {
   })
   const projectileVisuals = new Map<number, THREE.Group>()
   const impactEffects: { mesh: THREE.Mesh; bornAt: number }[] = []
+  const laserLingerEffects: { root: THREE.Group; bornAt: number }[] = []
+  const lightningEffects: { root: THREE.Group; bornAt: number; duration: number }[] = []
+  const seenFxEventIds = new Set<number>()
 
   const cellGeometry = new THREE.BoxGeometry(0.94, 0.1, 0.94)
   const cellMaterial = new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.95 })
@@ -167,6 +170,58 @@ export function useGameScene(options: {
   const healthBarGeometry = new THREE.PlaneGeometry(1.18, .14)
   const HEALTH_BAR_HALF_WIDTH = 1.18 / 2
   const projectileGeometry = new THREE.SphereGeometry(.09, 10, 8)
+  const laserCoreGeometry = new THREE.CylinderGeometry(.035, .035, 1, 8)
+  const laserGlowGeometry = new THREE.CylinderGeometry(.11, .11, 1, 10)
+  const laserCoreMaterial = new THREE.MeshBasicMaterial({
+    color: '#eef8ff',
+    transparent: true,
+    opacity: .98,
+    depthWrite: false,
+  })
+  const laserGlowMaterial = new THREE.MeshBasicMaterial({
+    color: '#7ec8ff',
+    transparent: true,
+    opacity: .42,
+    depthWrite: false,
+  })
+  const laserUp = new THREE.Vector3(0, 1, 0)
+  const laserDir = new THREE.Vector3()
+  const laserFrom = new THREE.Vector3()
+  const laserTo = new THREE.Vector3()
+  const lightningCoreGeometry = new THREE.CylinderGeometry(.018, .018, 1, 6)
+  const lightningGlowGeometry = new THREE.CylinderGeometry(.045, .045, 1, 8)
+  const lightningSegFrom = new THREE.Vector3()
+  const lightningSegTo = new THREE.Vector3()
+  const lightningSegDir = new THREE.Vector3()
+  const arrowShaftGeometry = new THREE.CylinderGeometry(.028, .028, .32, 6)
+  const arrowTipGeometry = new THREE.ConeGeometry(.09, .22, 7)
+  const arrowFletchGeometry = new THREE.ConeGeometry(.07, .12, 3)
+  const arrowBodyMaterial = new THREE.MeshBasicMaterial({
+    color: '#5dff8a',
+    transparent: true,
+    opacity: .98,
+    depthWrite: false,
+  })
+  const arrowGlowMaterial = new THREE.MeshBasicMaterial({
+    color: '#b8ffd0',
+    transparent: true,
+    opacity: .55,
+    depthWrite: false,
+  })
+  const arrowTrailMaterial = new THREE.LineBasicMaterial({
+    color: '#62e398',
+    transparent: true,
+    opacity: .9,
+    depthWrite: false,
+    depthTest: true,
+    vertexColors: true,
+  })
+  const arrowUp = new THREE.Vector3(0, 1, 0)
+  const arrowDir = new THREE.Vector3()
+  const arrowTrailTipColor = new THREE.Color('#b8ffd0')
+  const arrowTrailTailColor = new THREE.Color('#1f6b3f')
+  const ARROW_TRAIL_MAX_POINTS = 56
+  const ARROW_TRAIL_MIN_STEP = 0.06
   const impactGeometry = new THREE.RingGeometry(.12, .18, 20)
   const healthBackMaterial = new THREE.MeshBasicMaterial({ color: '#2f4638', transparent: true, opacity: .92, depthTest: false, depthWrite: false, fog: false })
   const healthFillMaterial = new THREE.MeshBasicMaterial({ color: '#65e58e', depthTest: false, depthWrite: false, fog: false })
@@ -719,20 +774,212 @@ export function useGameScene(options: {
     if (healthBar) healthBar.visible = !cloaked
   }
 
+  function layoutLaserBeam(root: THREE.Object3D, fromX: number, fromZ: number, toX: number, toZ: number) {
+    laserFrom.set(fromX, .72, fromZ)
+    laserTo.set(toX, .48, toZ)
+    laserDir.subVectors(laserTo, laserFrom)
+    const length = Math.max(0.05, laserDir.length())
+    root.position.copy(laserFrom).add(laserTo).multiplyScalar(.5)
+    root.scale.set(1, length, 1)
+    root.quaternion.setFromUnitVectors(laserUp, laserDir.normalize())
+  }
+
+  function createArrowProjectileVisual(projectile: BattleProjectile) {
+    const root = new THREE.Group()
+    root.userData.projectile = projectile
+    root.userData.style = 'arrow'
+
+    const body = new THREE.Group()
+    const tip = new THREE.Mesh(arrowTipGeometry, arrowBodyMaterial)
+    tip.position.y = .16
+    tip.renderOrder = 8
+    const shaft = new THREE.Mesh(arrowShaftGeometry, arrowBodyMaterial)
+    shaft.position.y = -.06
+    shaft.renderOrder = 8
+    const glow = new THREE.Mesh(arrowTipGeometry, arrowGlowMaterial)
+    glow.position.y = .16
+    glow.scale.setScalar(1.35)
+    glow.renderOrder = 7
+    const fletchA = new THREE.Mesh(arrowFletchGeometry, arrowGlowMaterial)
+    fletchA.position.set(0, -.22, 0)
+    fletchA.rotation.z = Math.PI
+    const fletchB = fletchA.clone()
+    fletchB.rotation.y = Math.PI / 2
+    body.add(glow, tip, shaft, fletchA, fletchB)
+    root.add(body)
+    root.userData.arrowBody = body
+
+    const fromX = projectile.fromX - HALF
+    const fromZ = projectile.fromZ - HALF
+    const fromY = 1.05
+    root.position.set(fromX, fromY, fromZ)
+    root.userData.posX = fromX
+    root.userData.posY = fromY
+    root.userData.posZ = fromZ
+    root.userData.lastUpdateAt = projectile.launchAt
+    root.userData.trailHistory = [fromX, fromY, fromZ] as number[]
+
+    const trailPositions = new Float32Array(ARROW_TRAIL_MAX_POINTS * 3)
+    const trailColors = new Float32Array(ARROW_TRAIL_MAX_POINTS * 3)
+    trailPositions[0] = fromX
+    trailPositions[1] = fromY
+    trailPositions[2] = fromZ
+    arrowTrailTipColor.toArray(trailColors, 0)
+    const trailGeometry = new THREE.BufferGeometry()
+    trailGeometry.setAttribute('position', new THREE.BufferAttribute(trailPositions, 3))
+    trailGeometry.setAttribute('color', new THREE.BufferAttribute(trailColors, 3))
+    trailGeometry.setDrawRange(0, 1)
+    const trail = new THREE.Line(trailGeometry, arrowTrailMaterial)
+    trail.renderOrder = 6
+    trail.frustumCulled = false
+    projectileGroup.add(trail)
+    root.userData.trailLine = trail
+    root.userData.trailPositions = trailPositions
+    root.userData.trailColors = trailColors
+    root.userData.trailGeometry = trailGeometry
+
+    projectileGroup.add(root)
+    return root
+  }
+
+  function refreshArrowTrailGeometry(visual: THREE.Group) {
+    const history = visual.userData.trailHistory as number[] | undefined
+    const trailPositions = visual.userData.trailPositions as Float32Array | undefined
+    const trailColors = visual.userData.trailColors as Float32Array | undefined
+    const trailGeometry = visual.userData.trailGeometry as THREE.BufferGeometry | undefined
+    if (!history || !trailPositions || !trailColors || !trailGeometry || history.length < 3) return
+
+    const pointCount = Math.min(ARROW_TRAIL_MAX_POINTS, history.length / 3)
+    const startIndex = history.length / 3 - pointCount
+    for (let i = 0; i < pointCount; i++) {
+      const src = (startIndex + i) * 3
+      const dst = i * 3
+      trailPositions[dst] = history[src]
+      trailPositions[dst + 1] = history[src + 1]
+      trailPositions[dst + 2] = history[src + 2]
+      const t = pointCount <= 1 ? 1 : i / (pointCount - 1)
+      trailColors[dst] = THREE.MathUtils.lerp(arrowTrailTailColor.r, arrowTrailTipColor.r, t)
+      trailColors[dst + 1] = THREE.MathUtils.lerp(arrowTrailTailColor.g, arrowTrailTipColor.g, t)
+      trailColors[dst + 2] = THREE.MathUtils.lerp(arrowTrailTailColor.b, arrowTrailTipColor.b, t)
+    }
+    ;(trailGeometry.getAttribute('position') as THREE.BufferAttribute).needsUpdate = true
+    ;(trailGeometry.getAttribute('color') as THREE.BufferAttribute).needsUpdate = true
+    trailGeometry.setDrawRange(0, pointCount)
+    trailGeometry.computeBoundingSphere()
+  }
+
+  function updateArrowProjectile(
+    visual: THREE.Group,
+    projectile: BattleProjectile,
+    targetX: number,
+    targetZ: number,
+    now: number,
+  ) {
+    const toY = .48
+    let x = visual.userData.posX as number
+    let y = visual.userData.posY as number
+    let z = visual.userData.posZ as number
+    if (!Number.isFinite(x)) {
+      x = projectile.fromX - HALF
+      y = 1.05
+      z = projectile.fromZ - HALF
+    }
+
+    const lastAt = (visual.userData.lastUpdateAt as number) || projectile.launchAt
+    const dt = Math.max(0, Math.min(80, now - lastAt))
+    visual.userData.lastUpdateAt = now
+
+    arrowDir.set(targetX - x, toY - y, targetZ - z)
+    const dist = arrowDir.length()
+    const remaining = Math.max(0, projectile.impactAt - now)
+    if (dist > 1e-5) {
+      // Chase the live monster; arrive near impactAt while continuously correcting heading.
+      const step = remaining <= dt ? dist : dist * Math.min(1, dt / Math.max(remaining, 1))
+      arrowDir.multiplyScalar(step / dist)
+      x += arrowDir.x
+      y += arrowDir.y
+      z += arrowDir.z
+    } else {
+      x = targetX
+      y = toY
+      z = targetZ
+    }
+
+    visual.userData.posX = x
+    visual.userData.posY = y
+    visual.userData.posZ = z
+    visual.position.set(x, y, z)
+
+    const body = visual.userData.arrowBody as THREE.Group | undefined
+    if (body) {
+      arrowDir.set(targetX - x, toY - y, targetZ - z)
+      if (arrowDir.lengthSq() < 1e-6) arrowDir.set(targetX - (projectile.fromX - HALF), toY - 1.05, targetZ - (projectile.fromZ - HALF))
+      if (arrowDir.lengthSq() > 1e-6) {
+        body.quaternion.setFromUnitVectors(arrowUp, arrowDir.normalize())
+      }
+    }
+
+    const history = visual.userData.trailHistory as number[]
+    if (history) {
+      const count = history.length / 3
+      if (count <= 1) {
+        history.push(x, y, z)
+      } else {
+        const anchorX = history[history.length - 6]
+        const anchorY = history[history.length - 5]
+        const anchorZ = history[history.length - 4]
+        if (
+          Math.hypot(x - anchorX, y - anchorY, z - anchorZ) >= ARROW_TRAIL_MIN_STEP
+          || remaining <= 0
+        ) {
+          history.push(x, y, z)
+          const maxFloats = ARROW_TRAIL_MAX_POINTS * 3
+          if (history.length > maxFloats) history.splice(0, history.length - maxFloats)
+        } else {
+          history[history.length - 3] = x
+          history[history.length - 2] = y
+          history[history.length - 1] = z
+        }
+      }
+      refreshArrowTrailGeometry(visual)
+    }
+  }
+
+  function disposeArrowProjectileVisual(visual: THREE.Group) {
+    const trail = visual.userData.trailLine as THREE.Line | undefined
+    const trailGeometry = visual.userData.trailGeometry as THREE.BufferGeometry | undefined
+    if (trail) projectileGroup.remove(trail)
+    trailGeometry?.dispose()
+  }
+
   function createProjectileVisual(projectile: BattleProjectile) {
+    const root = new THREE.Group()
+    root.userData.projectile = projectile
+    root.userData.style = projectile.style || 'orb'
+    if (projectile.style === 'laser') {
+      const glow = new THREE.Mesh(laserGlowGeometry, laserGlowMaterial)
+      const core = new THREE.Mesh(laserCoreGeometry, laserCoreMaterial)
+      glow.renderOrder = 6
+      core.renderOrder = 7
+      root.add(glow, core)
+      layoutLaserBeam(root, projectile.fromX - HALF, projectile.fromZ - HALF, projectile.fromX - HALF, projectile.fromZ - HALF)
+      projectileGroup.add(root)
+      return root
+    }
+    if (projectile.style === 'arrow') {
+      return createArrowProjectileVisual(projectile)
+    }
     let material = projectileMaterials.get(projectile.color)
     if (!material) {
       const color = new THREE.Color(projectile.color)
       material = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: .95 })
       projectileMaterials.set(projectile.color, material)
     }
-    const root = new THREE.Group()
     const orb = new THREE.Mesh(projectileGeometry, material)
     const halo = new THREE.Mesh(recipeHaloGeometry, material)
     halo.scale.setScalar(.26)
     halo.rotation.x = Math.PI / 2
     root.add(orb, halo)
-    root.userData.projectile = projectile
     projectileGroup.add(root)
     return root
   }
@@ -747,8 +994,135 @@ export function useGameScene(options: {
     impactEffects.push({ mesh, bornAt: performance.now() })
   }
 
+  function spawnLaserLinger(fromX: number, fromZ: number, toX: number, toZ: number) {
+    const root = new THREE.Group()
+    const glow = new THREE.Mesh(laserGlowGeometry, laserGlowMaterial.clone())
+    const core = new THREE.Mesh(laserCoreGeometry, laserCoreMaterial.clone())
+    ;(glow.material as THREE.MeshBasicMaterial).opacity = .35
+    ;(core.material as THREE.MeshBasicMaterial).opacity = .85
+    root.add(glow, core)
+    layoutLaserBeam(root, fromX, fromZ, toX, toZ)
+    effectGroup.add(root)
+    laserLingerEffects.push({ root, bornAt: performance.now() })
+  }
+
+  function buildJaggedLightningPoints(
+    fromX: number,
+    fromY: number,
+    fromZ: number,
+    toX: number,
+    toY: number,
+    toZ: number,
+  ) {
+    const dx = toX - fromX
+    const dy = toY - fromY
+    const dz = toZ - fromZ
+    const length = Math.hypot(dx, dz) || 1
+    const segments = Math.max(5, Math.min(12, Math.round(length * 2.4)))
+    const px = -dz / length
+    const pz = dx / length
+    const points: THREE.Vector3[] = []
+    for (let i = 0; i <= segments; i++) {
+      const t = i / segments
+      let ox = 0
+      let oy = 0
+      let oz = 0
+      if (i > 0 && i < segments) {
+        const amp = (.1 + Math.random() * .22) * Math.min(1.4, .35 + length * .12)
+        const side = (Math.random() - .5) * 2 * amp
+        ox = px * side
+        oz = pz * side
+        oy = (Math.random() - .5) * .16
+      }
+      points.push(new THREE.Vector3(
+        fromX + dx * t + ox,
+        fromY + dy * t + oy,
+        fromZ + dz * t + oz,
+      ))
+    }
+    return points
+  }
+
+  function layoutLightningSegment(
+    mesh: THREE.Object3D,
+    from: THREE.Vector3,
+    to: THREE.Vector3,
+  ) {
+    lightningSegDir.subVectors(to, from)
+    const length = Math.max(0.04, lightningSegDir.length())
+    mesh.position.copy(from).add(to).multiplyScalar(.5)
+    mesh.scale.set(1, length, 1)
+    mesh.quaternion.setFromUnitVectors(laserUp, lightningSegDir.normalize())
+  }
+
+  function spawnLightningBolt(
+    fromX: number,
+    fromZ: number,
+    toX: number,
+    toZ: number,
+    color: string,
+  ) {
+    const points = buildJaggedLightningPoints(fromX, 1.15, fromZ, toX, .55, toZ)
+    const glowMaterial = new THREE.MeshBasicMaterial({
+      color,
+      transparent: true,
+      opacity: .62,
+      depthWrite: false,
+    })
+    const coreMaterial = new THREE.MeshBasicMaterial({
+      color: '#ffe8e8',
+      transparent: true,
+      opacity: .98,
+      depthWrite: false,
+    })
+    const root = new THREE.Group()
+    root.userData.glowOpacity = .62
+    root.userData.coreOpacity = .98
+    for (let i = 0; i < points.length - 1; i++) {
+      lightningSegFrom.copy(points[i])
+      lightningSegTo.copy(points[i + 1])
+      const glow = new THREE.Mesh(lightningGlowGeometry, glowMaterial)
+      const core = new THREE.Mesh(lightningCoreGeometry, coreMaterial)
+      glow.renderOrder = 9
+      core.renderOrder = 10
+      glow.userData.layer = 'glow'
+      core.userData.layer = 'core'
+      layoutLightningSegment(glow, lightningSegFrom, lightningSegTo)
+      layoutLightningSegment(core, lightningSegFrom, lightningSegTo)
+      root.add(glow, core)
+    }
+    effectGroup.add(root)
+    lightningEffects.push({ root, bornAt: performance.now(), duration: 360 })
+    spawnImpact(new THREE.Vector3(toX, .45, toZ), color)
+  }
+
+  function playFxEvents(events: BattleFxEvent[] | undefined) {
+    if (!events?.length) return
+    for (const event of events) {
+      if (seenFxEventIds.has(event.id)) continue
+      seenFxEventIds.add(event.id)
+      if (event.kind !== 'lightning') continue
+      const color = event.color || '#ff3b3b'
+      for (const segment of event.segments) {
+        spawnLightningBolt(
+          segment.fromX - HALF,
+          segment.fromZ - HALF,
+          segment.toX - HALF,
+          segment.toZ - HALF,
+          color,
+        )
+      }
+    }
+    if (seenFxEventIds.size > 400) {
+      const keep = [...seenFxEventIds].slice(-200)
+      seenFxEventIds.clear()
+      for (const id of keep) seenFxEventIds.add(id)
+    }
+  }
+
   function syncBattleVisuals(snapshot: BattleSnapshot) {
     if (!initialized) return
+    playFxEvents(snapshot.fxEvents)
     const activeMonsters = new Set(snapshot.monsters.map((monster) => monster.id))
     snapshot.monsters.forEach((monster) => {
       const visual = monsterVisuals.get(monster.id) || createMonsterVisual(monster)
@@ -792,18 +1166,39 @@ export function useGameScene(options: {
     })
     projectileVisuals.forEach((visual, id) => {
       if (activeProjectiles.has(id)) return
-      spawnImpact(
-        visual.position,
-        (visual.children[0] as THREE.Mesh).material instanceof THREE.MeshBasicMaterial
-          ? ((visual.children[0] as THREE.Mesh).material as THREE.MeshBasicMaterial).color.getStyle()
-          : '#fff3a5',
-      )
+      const projectile = visual.userData.projectile as BattleProjectile
+      if (projectile.style === 'laser') {
+        const target = monsterVisuals.get(projectile.targetId)
+        spawnLaserLinger(
+          projectile.fromX - HALF,
+          projectile.fromZ - HALF,
+          target?.position.x ?? projectile.fromX - HALF,
+          target?.position.z ?? projectile.fromZ - HALF,
+        )
+        spawnImpact(
+          new THREE.Vector3(
+            target?.position.x ?? projectile.fromX - HALF,
+            .45,
+            target?.position.z ?? projectile.fromZ - HALF,
+          ),
+          '#c8f0ff',
+        )
+      } else if (projectile.style === 'arrow') {
+        spawnImpact(visual.position.clone().setY(.45), projectile.color || '#5dff8a')
+        disposeArrowProjectileVisual(visual)
+      } else {
+        spawnImpact(
+          visual.position,
+          (visual.children[0] as THREE.Mesh).material instanceof THREE.MeshBasicMaterial
+            ? ((visual.children[0] as THREE.Mesh).material as THREE.MeshBasicMaterial).color.getStyle()
+            : '#fff3a5',
+        )
+      }
       projectileGroup.remove(visual)
       projectileVisuals.delete(id)
       seenProjectileIds.delete(id)
     })
   }
-
   function updateBattleVisuals() {
     const now = Date.now() + serverClockOffset.value
     const monstersById = new Map(battleState.value.monsters.map((monster) => [monster.id, monster]))
@@ -819,11 +1214,19 @@ export function useGameScene(options: {
     })
     projectileVisuals.forEach((visual) => {
       const projectile = visual.userData.projectile as BattleProjectile
+      const target = monsterVisuals.get(projectile.targetId)
+      const targetX = target?.position.x ?? projectile.fromX - HALF
+      const targetZ = target?.position.z ?? projectile.fromZ - HALF
+      if (projectile.style === 'laser') {
+        layoutLaserBeam(visual, projectile.fromX - HALF, projectile.fromZ - HALF, targetX, targetZ)
+        return
+      }
+      if (projectile.style === 'arrow') {
+        updateArrowProjectile(visual, projectile, targetX, targetZ, now)
+        return
+      }
       const duration = Math.max(1, projectile.impactAt - projectile.launchAt)
       const progress = Math.max(0, Math.min(1, (now - projectile.launchAt) / duration))
-      const target = monsterVisuals.get(projectile.targetId)
-      const targetX = target?.position.x ?? visual.position.x
-      const targetZ = target?.position.z ?? visual.position.z
       visual.position.set(
         THREE.MathUtils.lerp(projectile.fromX - HALF, targetX, progress),
         THREE.MathUtils.lerp(1.18, .52, progress) + Math.sin(progress * Math.PI) * .9,
@@ -831,6 +1234,50 @@ export function useGameScene(options: {
       )
       visual.rotation.y += .14
     })
+    for (let index = laserLingerEffects.length - 1; index >= 0; index--) {
+      const effect = laserLingerEffects[index]
+      const age = performance.now() - effect.bornAt
+      const fade = Math.max(0, 1 - age / 140)
+      effect.root.traverse((item) => {
+        if (item instanceof THREE.Mesh && item.material instanceof THREE.MeshBasicMaterial) {
+          const base = item === effect.root.children[0] ? .35 : .85
+          item.material.opacity = base * fade
+        }
+      })
+      if (age >= 140) {
+        effect.root.traverse((item) => {
+          if (item instanceof THREE.Mesh && item.material !== laserCoreMaterial && item.material !== laserGlowMaterial) {
+            ;(item.material as THREE.Material).dispose()
+          }
+        })
+        effectGroup.remove(effect.root)
+        laserLingerEffects.splice(index, 1)
+      }
+    }
+    for (let index = lightningEffects.length - 1; index >= 0; index--) {
+      const effect = lightningEffects[index]
+      const age = performance.now() - effect.bornAt
+      const fade = Math.max(0, 1 - age / effect.duration)
+      const glowOpacity = (effect.root.userData.glowOpacity as number) || .5
+      const coreOpacity = (effect.root.userData.coreOpacity as number) || .95
+      const disposed = new Set<THREE.Material>()
+      effect.root.traverse((item) => {
+        if (!(item instanceof THREE.Mesh) || !(item.material instanceof THREE.MeshBasicMaterial)) return
+        item.material.opacity = (item.userData.layer === 'glow' ? glowOpacity : coreOpacity) * fade
+      })
+      if (age >= effect.duration) {
+        effect.root.traverse((item) => {
+          if (!(item instanceof THREE.Mesh)) return
+          const material = item.material as THREE.Material
+          if (!disposed.has(material)) {
+            disposed.add(material)
+            material.dispose()
+          }
+        })
+        effectGroup.remove(effect.root)
+        lightningEffects.splice(index, 1)
+      }
+    }
     for (let index = impactEffects.length - 1; index >= 0; index--) {
       const effect = impactEffects[index]
       const age = (performance.now() - effect.bornAt) / 420
@@ -876,27 +1323,22 @@ export function useGameScene(options: {
   }
 
   function updateTowerDetailPosition() {
-    if (!selectedTowerKey.value || !host.value || !renderer || !camera) return
+    if (!selectedTowerKey.value) return
     if (isCompactUi()) {
       clearAnchoredDetailStyle(towerDetailStyle)
       return
     }
-    const [x, z] = selectedTowerKey.value.split(':').map(Number)
-    const tower = parseTower(towers.get(selectedTowerKey.value))
-    if (!tower || !isValidCell({ x, z })) return
-
-    const point = position({ x, z })
-    point.y = tower.type === 'rock' ? ROCK_DETAIL_PANEL_Y : 1.9
-    point.project(camera)
-    const { width, height } = host.value.getBoundingClientRect()
-    const panelWidth = Math.min(306, Math.max(0, width - 24))
-    const panelHeight = detailPanel.value?.offsetHeight || 180
-    const projectedX = (point.x * .5 + .5) * width
-    const projectedY = (-point.y * .5 + .5) * height
-    const left = Math.max(12 + panelWidth / 2, Math.min(width - 12 - panelWidth / 2, projectedX))
-    const top = Math.max(12, Math.min(height - panelHeight - 12, projectedY + 30))
-    const next = { left: `${left}px`, top: `${top}px`, transform: 'translateX(-50%)' }
-    if (towerDetailStyle.value.left !== next.left || towerDetailStyle.value.top !== next.top) towerDetailStyle.value = next
+    // Desktop: pin to canvas top-right (not world-projected to the tower).
+    const next: CSSProperties = { top: '16px', right: '16px', left: 'auto', transform: 'none' }
+    const current = towerDetailStyle.value
+    if (
+      current.top !== next.top
+      || current.right !== next.right
+      || current.left !== next.left
+      || current.transform !== next.transform
+    ) {
+      towerDetailStyle.value = next
+    }
   }
 
   function updateMonsterDetailPosition() {
@@ -1298,6 +1740,18 @@ export function useGameScene(options: {
     monsterWingGeometry.dispose()
     healthBarGeometry.dispose()
     projectileGeometry.dispose()
+    laserCoreGeometry.dispose()
+    laserGlowGeometry.dispose()
+    laserCoreMaterial.dispose()
+    laserGlowMaterial.dispose()
+    lightningCoreGeometry.dispose()
+    lightningGlowGeometry.dispose()
+    arrowShaftGeometry.dispose()
+    arrowTipGeometry.dispose()
+    arrowFletchGeometry.dispose()
+    arrowBodyMaterial.dispose()
+    arrowGlowMaterial.dispose()
+    arrowTrailMaterial.dispose()
     impactGeometry.dispose()
     healthBackMaterial.dispose()
     healthFillMaterial.dispose()
@@ -1334,8 +1788,24 @@ export function useGameScene(options: {
       ;(visual.userData.bodyMaterial as THREE.Material)?.dispose()
     })
     monsterVisuals.clear()
+    projectileVisuals.forEach((visual) => disposeArrowProjectileVisual(visual))
     projectileVisuals.clear()
     impactEffects.splice(0, impactEffects.length)
+    laserLingerEffects.splice(0, laserLingerEffects.length)
+    for (const effect of lightningEffects) {
+      const disposed = new Set<THREE.Material>()
+      effect.root.traverse((item) => {
+        if (!(item instanceof THREE.Mesh)) return
+        const material = item.material as THREE.Material
+        if (!disposed.has(material)) {
+          disposed.add(material)
+          material.dispose()
+        }
+      })
+      effectGroup.remove(effect.root)
+    }
+    lightningEffects.splice(0, lightningEffects.length)
+    seenFxEventIds.clear()
   }
 
   watch(selectedTowerKey, () => rebuildTowers())

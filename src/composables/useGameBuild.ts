@@ -1,5 +1,5 @@
 import type * as Y from 'yjs'
-import { applyTianranZumulvAbsorb, createBaseTower, formatAbsorbedAbilityNames, parseTower, recipeData, rollTower, towerDisplayName } from '../game/towers'
+import { applyTianranZumulvAbsorb, createBaseTower, formatAbsorbedAbilityNames, parseTower, recipeData, rollTower, sumMvpStacksAmong, towerDisplayName } from '../game/towers'
 import type { BaseTowerId, BattleCombineOption, BattleSnapshot, KeepOption, PlayerBuildState, Tower } from '../game/types'
 import type { Ref } from 'vue'
 
@@ -32,8 +32,10 @@ export function useGameBuildActions(options: {
 
   function chooseKeepOption(option: KeepOption) {
     if (options.buildState.value.phase !== 'choosing' || options.battleState.value.phase === 'combat') return
-    const pendingKeys = [...options.buildState.value.pendingKeys]
-    const keptResult = applyTianranZumulvAbsorb(options.towers, option.targetKey, option.result)
+    const keptResult = applyTianranZumulvAbsorb(options.towers, option.targetKey, {
+      ...option.result,
+      mvpStacks: sumMvpStacksAmong(options.towers, option.ingredientKeys?.length ? option.ingredientKeys : [option.targetKey]) || option.result.mvpStacks,
+    })
     options.doc.transact(() => {
       for (const pendingKey of options.buildState.value.pendingKeys) {
         if (!options.towers.has(pendingKey)) continue
@@ -50,7 +52,10 @@ export function useGameBuildActions(options: {
       })
     })
     if ((option.id.startsWith('upgrade:') || option.id.startsWith('recipe:')) && options.registerCombine) {
-      options.registerCombine(option.targetKey, pendingKeys, keptResult)
+      // Only the result cell (and any explicitly listed ingredients). Never the whole
+      // pending hand — those cells are reused later and stale lineage steals their damage.
+      const ingredientKeys = option.ingredientKeys?.length ? option.ingredientKeys : [option.targetKey]
+      options.registerCombine(option.targetKey, ingredientKeys, keptResult)
     }
     options.selectTower(option.targetKey)
     const absorbed = formatAbsorbedAbilityNames(keptResult.abilities)
@@ -71,7 +76,11 @@ export function useGameBuildActions(options: {
       options.showMessage('合成失败：所需材料已经变更')
       return
     }
-    const result = applyTianranZumulvAbsorb(options.towers, option.targetKey, option.result)
+    const inheritedMvp = sumMvpStacksAmong(options.towers, option.ingredientKeys)
+    const result = applyTianranZumulvAbsorb(options.towers, option.targetKey, {
+      ...option.result,
+      mvpStacks: inheritedMvp || undefined,
+    })
     options.doc.transact(() => {
       const rock = JSON.stringify({ type: 'rock', name: '岩石' } satisfies Tower)
       option.ingredientKeys.forEach((ingredientKey) => {
@@ -172,6 +181,7 @@ export function useGameBuildActions(options: {
       unitId: recipe.id,
       name: recipe.name,
       temporary: false,
+      mvpStacks: current.mvpStacks,
     })
     options.doc.transact(() => {
       options.towers.set(cellKey, JSON.stringify(result))

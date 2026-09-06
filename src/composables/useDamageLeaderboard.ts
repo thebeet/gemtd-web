@@ -35,7 +35,8 @@ export function useDamageLeaderboard(options: {
   })
 
   function entryLabel(entry: LeaderboardEntry) {
-    return `${towerDisplayName(entry)} · ${entry.key}`
+    const mvp = entry.mvpStacks && entry.mvpStacks > 0 ? ` · MVP×${entry.mvpStacks}` : ''
+    return `${towerDisplayName(entry)}${mvp} · ${entry.key}`
   }
 
   const hasEntries = computed(() => entries.value.length > 0)

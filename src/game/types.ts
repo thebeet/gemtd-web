@@ -1,12 +1,31 @@
 export type BaseTowerId = 'ruby' | 'topaz' | 'sapphire' | 'emerald' | 'aquamarine' | 'amethyst' | 'diamond' | 'opal'
 export type TowerId = BaseTowerId | 'rock'
-export type Tower = { type: string; quality?: number; unitId?: string; name?: string; temporary?: boolean; ownerId?: string; fixed?: boolean; abilities?: string[] }
+export type Tower = {
+  type: string
+  quality?: number
+  unitId?: string
+  name?: string
+  temporary?: boolean
+  ownerId?: string
+  fixed?: boolean
+  abilities?: string[]
+  /** Wave MVP stacks (0–10). Each stack +10% damage; at 10 also radiates as an aura. */
+  mvpStacks?: number
+}
 export type User = { name: string; color: string }
 export type Cell = { x: number; z: number }
 export type RoutePoint = Cell & { id: string; label: string; kind: 'start' | 'waypoint' | 'end' }
 export type BuildPhase = 'idle' | 'placing' | 'choosing'
 export type PlayerBuildState = { wave: number; playerLevel: number; phase: BuildPhase; pendingKeys: string[] }
-export type KeepOption = { id: string; label: string; detail: string; targetKey: string; result: Tower }
+export type KeepOption = {
+  id: string
+  label: string
+  detail: string
+  targetKey: string
+  result: Tower
+  /** Cells whose historical damage should roll into the result. Keep-phase temps never fought — usually just targetKey. */
+  ingredientKeys?: string[]
+}
 export type BattleCombineOption = KeepOption & { ingredientKeys: string[]; ingredientUnitIds: string[] }
 export type TowerAuraEffect = {
   id: string
@@ -49,7 +68,32 @@ export type BattleMonster = {
   bountyExperience?: number
   statuses?: MonsterStatusEffect[]
 }
-export type BattleProjectile = { id: number; towerKey: string; targetId: number; fromX: number; fromZ: number; launchAt: number; impactAt: number; color: string }
+export type BattleProjectile = {
+  id: number
+  towerKey: string
+  targetId: number
+  fromX: number
+  fromZ: number
+  launchAt: number
+  impactAt: number
+  color: string
+  style?: 'orb' | 'laser' | 'arrow'
+}
+
+export type BattleFxSegment = {
+  fromX: number
+  fromZ: number
+  toX: number
+  toZ: number
+}
+
+export type BattleFxEvent = {
+  id: number
+  kind: 'lightning'
+  color?: string
+  segments: BattleFxSegment[]
+}
+
 export type BattleSnapshot = {
   type: 'snapshot'
   serverTime: number
@@ -70,6 +114,9 @@ export type BattleSnapshot = {
   monsters: BattleMonster[]
   projectiles: BattleProjectile[]
   newCombatEvents?: CombatEvent[]
+  fxEvents?: BattleFxEvent[]
+  /** Awarded when a wave ends; client writes stacks onto the Yjs tower. */
+  mvpAward?: { key: string; mvpStacks: number; name?: string; wave: number }
 }
 
 export type CombatEventDebuff = { kind: 'slow' | 'armorBreak' | 'poison' | 'stun'; level: number }
@@ -106,6 +153,7 @@ export type LeaderboardEntry = {
   name?: string
   damage: number
   kills: number
+  mvpStacks?: number
 }
 
 export type LeaderboardMessage = {

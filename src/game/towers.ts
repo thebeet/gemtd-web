@@ -51,22 +51,25 @@ export function isPlaceableBuildCell(cell: Cell, towers: Y.Map<string>) {
   return existing.type === 'rock'
 }
 
-const EDGE_ROCK_STRETCH = 4
+const EDGE_ROCK_OUTWARD = 4
+const EDGE_ROCK_INWARD = 6
 const EDGE_ROCK: Tower = { type: 'rock', name: '岩石' }
 
-function edgeRockCellsFromWaypoint(waypoint: Cell, axis: 'x' | 'z', direction: 1 | -1): Cell[] {
+function edgeRockCellsFromWaypoint(waypoint: Cell, axis: 'x' | 'z', towardEdge: 1 | -1): Cell[] {
+  const routeKeys = new Set(routePoints.map((point) => cellKey(point)))
   const cells: Cell[] = []
-  for (let step = 1; step <= EDGE_ROCK_STRETCH; step++) {
-    if (axis === 'x') {
-      const x = waypoint.x + direction * step
-      if (x < 0 || x >= GRID_SIZE) break
-      cells.push({ x, z: waypoint.z })
-      continue
+  const addStretch = (direction: 1 | -1, count: number) => {
+    for (let step = 1; step <= count; step++) {
+      const cell = axis === 'x'
+        ? { x: waypoint.x + direction * step, z: waypoint.z }
+        : { x: waypoint.x, z: waypoint.z + direction * step }
+      if (cell.x < 0 || cell.x >= GRID_SIZE || cell.z < 0 || cell.z >= GRID_SIZE) break
+      if (routeKeys.has(cellKey(cell))) continue
+      cells.push(cell)
     }
-    const z = waypoint.z + direction * step
-    if (z < 0 || z >= GRID_SIZE) break
-    cells.push({ x: waypoint.x, z })
   }
+  addStretch(towardEdge, EDGE_ROCK_OUTWARD)
+  addStretch((towardEdge === 1 ? -1 : 1), EDGE_ROCK_INWARD)
   return cells
 }
 
@@ -120,7 +123,7 @@ export function describeAbility(id: string) {
     tower_shechengguanghuan: ['射程光环', '半径 290 内友方塔攻击距离 +300。'],
     tower_lanbaoshi: ['蓝宝石寒霜', '攻击附带 3 级减速：移动速度 −30%，持续 3 秒。'],
     tower_lanbaoshi2: ['蓝宝石极寒', '攻击附带 4 级减速：移动速度 −40%，持续 3.4 秒。'],
-    tower_speed_aura_guichu: ['鬼触攻速光环', '附近友方塔攻击速度 +80。'],
+    tower_speed_aura_guichu: ['鬼触攻速光环', '附近友方塔攻击速度 +80（光环半径 200）。'],
     tower_tanlan: ['贪婪', '附近友方塔击杀时有 5% 概率获得 10 倍金币（光环半径 800）。'],
     tower_5shihua: ['石化', '攻击有 1% 概率触发凝视：周围敌人大幅减速，主目标石化 3 秒并受到 100% 额外物理伤害。'],
     tower_jingzhun: ['精准', '半径 300 内友方塔攻击不会落空（无视闪避）。'],
@@ -161,7 +164,7 @@ export function describeAbility(id: string) {
     }
     if (kind === 'tower_speed_aura') {
       const bonus = [0, 20, 30, 40, 50, 60, 70][level] || 0
-      return { id, name: `攻速光环 ${level}`, description: `附近友方塔攻击速度 +${bonus}。` }
+      return { id, name: `攻速光环 ${level}`, description: `附近友方塔攻击速度 +${bonus}（光环半径 664）。` }
     }
     if (kind === 'tower_jianshe') {
       const ratios = [0, 30, 40, 50, 60, 70, 100]
@@ -201,6 +204,55 @@ export function effectiveTowerDamageRange(stats: { damage: readonly [number, num
   return [stats.damage[0] + bonus, stats.damage[1] + bonus] as const
 }
 
+export const MVP_MAX_STACKS = 10
+export const MVP_BONUS_PER_STACK = 0.1
+export const MVP_AURA_RADIUS_CELLS = 500 / DOTA_UNITS_PER_CELL
+
+export function clampMvpStacks(value: unknown) {
+  const stacks = Math.floor(Number(value) || 0)
+  return Math.max(0, Math.min(MVP_MAX_STACKS, stacks))
+}
+
+export function mvpSelfBonus(stacks: number) {
+  return clampMvpStacks(stacks) * MVP_BONUS_PER_STACK
+}
+
+/** Extra damage multiplier from nearby 10-stack MVP auras (excludes self). */
+export function mvpAuraBonusAt(towers: Y.Map<string>, targetKey: string) {
+  const target = parseTower(towers.get(targetKey))
+  if (!target || target.type === 'rock') return 0
+  const [tx, tz] = targetKey.split(':').map(Number)
+  if (!Number.isFinite(tx) || !Number.isFinite(tz)) return 0
+  let best = 0
+  towers.forEach((raw, key) => {
+    if (key === targetKey) return
+    const source = parseTower(raw)
+    if (!source || source.type === 'rock' || source.temporary) return
+    if (clampMvpStacks(source.mvpStacks) < MVP_MAX_STACKS) return
+    const [sx, sz] = key.split(':').map(Number)
+    if (!Number.isFinite(sx) || !Number.isFinite(sz)) return
+    if (Math.hypot(sx - tx, sz - tz) > MVP_AURA_RADIUS_CELLS) return
+    best = Math.max(best, MVP_MAX_STACKS * MVP_BONUS_PER_STACK)
+  })
+  return best
+}
+
+export function towerMvpDamageMultiplier(towers: Y.Map<string>, targetKey: string | undefined) {
+  if (!targetKey) return 1
+  const tower = parseTower(towers.get(targetKey))
+  if (!tower || tower.type === 'rock') return 1
+  return 1 + mvpSelfBonus(tower.mvpStacks || 0) + mvpAuraBonusAt(towers, targetKey)
+}
+
+export function sumMvpStacksAmong(towers: Y.Map<string>, keys: readonly string[]) {
+  let total = 0
+  for (const key of keys) {
+    total += clampMvpStacks(parseTower(towers.get(key))?.mvpStacks)
+  }
+  return clampMvpStacks(total)
+}
+
+
 function formatAbilitySeconds(seconds: number) {
   const rounded = Math.round(seconds * 10) / 10
   return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1)
@@ -229,6 +281,8 @@ const CHENMO_AURA_RADIUS_CELLS = 600 / DOTA_UNITS_PER_CELL
 const JINGZHUN_AURA_RADIUS_CELLS = 300 / DOTA_UNITS_PER_CELL
 const TANLAN_AURA_RADIUS_CELLS = 800 / DOTA_UNITS_PER_CELL
 const MAOYAN_AURA_RADIUS_CELLS = 500 / DOTA_UNITS_PER_CELL
+const SPEED_AURA_RADIUS_CELLS = 664 / DOTA_UNITS_PER_CELL
+const GUICHU_SPEED_AURA_RADIUS_CELLS = 200 / DOTA_UNITS_PER_CELL
 
 /** Aura radius in grid cells. Uses ability-specific radii when known; otherwise the tower's attack range. */
 export function getAllyBuffAuraRadiusCells(abilityId: string, attackRangeUnits: number) {
@@ -238,6 +292,8 @@ export function getAllyBuffAuraRadiusCells(abilityId: string, attackRangeUnits: 
   if (abilityId === 'tower_jingzhun') return JINGZHUN_AURA_RADIUS_CELLS
   if (abilityId === 'tower_tanlan') return TANLAN_AURA_RADIUS_CELLS
   if (abilityId === 'tower_maoyan') return MAOYAN_AURA_RADIUS_CELLS
+  if (abilityId === 'tower_speed_aura_guichu') return GUICHU_SPEED_AURA_RADIUS_CELLS
+  if (/^tower_speed_aura\d+$/.test(abilityId)) return SPEED_AURA_RADIUS_CELLS
   return attackRangeUnits / DOTA_UNITS_PER_CELL
 }
 
@@ -281,6 +337,23 @@ export function computeReceivedAuraEffects(towers: Y.Map<string>, targetKey: str
         sourceKey,
         sourceName: towerDisplayName(source),
       })
+    }
+
+    if (sourceKey !== targetKey && clampMvpStacks(source.mvpStacks) >= MVP_MAX_STACKS) {
+      if (distance <= MVP_AURA_RADIUS_CELLS) {
+        const dedupeKey = `mvp-aura:${sourceKey}`
+        if (!seen.has(dedupeKey)) {
+          seen.add(dedupeKey)
+          effects.push({
+            id: dedupeKey,
+            name: 'MVP 光环',
+            description: `满层 MVP：周围友方塔伤害 +${Math.round(MVP_MAX_STACKS * MVP_BONUS_PER_STACK * 100)}%`,
+            kind: 'buff',
+            sourceKey,
+            sourceName: towerDisplayName(source),
+          })
+        }
+      }
     }
   })
 
@@ -334,13 +407,22 @@ export function computeSpeedAuraBonus(towers: Y.Map<string>, targetKey: string) 
     const stats = getTowerStats(source)
     if (!stats) return
 
-    const providerBonus = speedAuraBonusFromAbilities(stats.abilities)
-    if (!providerBonus) return
-
-    const auraRange = stats.range / DOTA_UNITS_PER_CELL
     const [sourceX, sourceZ] = sourceKey.split(':').map(Number)
-    if (Math.hypot(sourceX - targetX, sourceZ - targetZ) > auraRange) return
-    bonus += providerBonus
+    const distance = Math.hypot(sourceX - targetX, sourceZ - targetZ)
+    let levelBonus = 0
+    let guichuBonus = 0
+    for (const abilityId of stats.abilities) {
+      if (abilityId === 'tower_speed_aura_guichu') {
+        guichuBonus = 80
+        continue
+      }
+      const match = abilityId.match(/^tower_speed_aura(\d+)$/)
+      if (!match) continue
+      const level = Number(match[1])
+      if (level >= 1 && level <= 6) levelBonus = Math.max(levelBonus, SPEED_AURA_BONUS_BY_LEVEL[level])
+    }
+    if (levelBonus && distance <= SPEED_AURA_RADIUS_CELLS) bonus += levelBonus
+    if (guichuBonus && distance <= GUICHU_SPEED_AURA_RADIUS_CELLS) bonus += guichuBonus
   })
   return bonus
 }
@@ -636,6 +718,8 @@ export function computeKeepOptions(buildState: PlayerBuildState, towers: Y.Map<s
         detail: `${needed} 个相同塔升 ${bonus} 级`,
         targetKey: entry.key,
         result,
+        // Temps never dealt damage; only mark the result cell so lineage stays self-rooted.
+        ingredientKeys: [entry.key],
       }))
     }
   })
@@ -651,6 +735,7 @@ export function computeKeepOptions(buildState: PlayerBuildState, towers: Y.Map<s
         detail: isAbsorb ? `${recipe.tier} 合成 · 建造时汲取周围 8 格随机 2 技能` : `${recipe.tier} 合成`,
         targetKey: entry.key,
         result,
+        ingredientKeys: [entry.key],
       })
     }
   }

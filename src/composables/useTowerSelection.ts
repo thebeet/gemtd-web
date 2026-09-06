@@ -15,6 +15,8 @@ import {
   getTowerAbilities,
   getTowerStats,
   parseTower,
+  clampMvpStacks,
+  towerMvpDamageMultiplier,
 } from '../game/towers'
 import type { BattleCombineOption, BattleSnapshot, KeepOption, PlayerBuildState, RecipePreview } from '../game/types'
 import type { Ref } from 'vue'
@@ -39,7 +41,19 @@ export function useTowerSelection(options: {
   const selectedTowerStats = computed(() => getTowerStats(selectedTowerRecord.value))
   const selectedEffectiveDamage = computed(() => {
     const stats = selectedTowerStats.value
-    return stats ? effectiveTowerDamageRange(stats) : undefined
+    if (!stats) return undefined
+    const base = effectiveTowerDamageRange(stats)
+    const mult = towerMvpDamageMultiplier(options.towers, selectedTowerKey.value)
+    if (mult === 1) return base
+    return [Math.round(base[0] * mult), Math.round(base[1] * mult)] as const
+  })
+  const selectedMvpStacks = computed(() => {
+    void towersRevision.value
+    return clampMvpStacks(selectedTowerRecord.value?.mvpStacks)
+  })
+  const selectedMvpMultiplier = computed(() => {
+    void towersRevision.value
+    return towerMvpDamageMultiplier(options.towers, selectedTowerKey.value)
   })
   const selectedEffectiveAttackInterval = computed(() => {
     void towersRevision.value
@@ -99,6 +113,8 @@ export function useTowerSelection(options: {
     selectedTowerRecord,
     selectedTowerStats,
     selectedEffectiveDamage,
+    selectedMvpStacks,
+    selectedMvpMultiplier,
     selectedEffectiveAttackInterval,
     selectedEffectiveRange,
     selectedTowerAbilities,

@@ -148,10 +148,26 @@ export function useGameBattle(options: {
         serverClockOffset.value = message.serverTime - Date.now()
         battleState.value = message
         applyServerReset(message)
+        if (message.mvpAward) applyMvpAward(message.mvpAward)
         options.onSnapshot(message)
       } catch { /* ignore malformed battle messages */ }
     },
   })
+
+  function applyMvpAward(award: NonNullable<BattleSnapshot['mvpAward']>) {
+    const current = parseTower(towers.get(award.key))
+    if (!current || current.type === 'rock') return
+    const nextStacks = Math.max(current.mvpStacks || 0, award.mvpStacks)
+    if (current.mvpStacks === nextStacks) {
+      showMessage(`MVP：${award.name || current.name || award.key}（${nextStacks} 层）`)
+      return
+    }
+    doc.transact(() => {
+      towers.set(award.key, JSON.stringify({ ...current, mvpStacks: nextStacks } satisfies Tower))
+    })
+    const auraNote = nextStacks >= 10 ? ' · 已转化为伤害光环' : ''
+    showMessage(`MVP：${award.name || current.name || award.key} 获得第 ${nextStacks} 层（伤害 +${nextStacks * 10}%）${auraNote}`)
+  }
 
   const battleConnected = computed(() => status.value === 'OPEN')
 
@@ -169,6 +185,7 @@ export function useGameBattle(options: {
     flying?: boolean
     boss?: boolean
     abilities?: string[]
+    count?: number
   }) {
     if (!battleConnected.value) return
     sendGameMessage({
