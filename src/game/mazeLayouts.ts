@@ -1,9 +1,8 @@
 import type * as Y from 'yjs'
 import mazeLayoutsData from './mazeLayouts.json'
 import { mazeLayoutMeta, type MazeLayoutId } from './mazeLayouts.meta'
-import { routePoints } from './constants'
 import type { SavedMazeLayout } from './layoutTypes'
-import { findPath } from './pathfinding'
+import { routeSegmentsForBlockedCells } from './grid'
 import type { Cell } from './types'
 import { cellKey, isReservedBuildCell, isValidCell, parseTower, routePointAt } from './towers'
 
@@ -48,15 +47,8 @@ export function layoutCellSet(layout: MazeLayout | undefined) {
 
 /** Path length through layout rocks; -1 if the maze is blocked. */
 export function pathLenForBlockedCells(cells: readonly string[]) {
-  const blocked = new Set(cells)
-  routePoints.forEach((point) => blocked.delete(cellKey(point)))
-  let len = 0
-  for (let index = 0; index < routePoints.length - 1; index++) {
-    const segment = findPath(routePoints[index], routePoints[index + 1], blocked)
-    if (!segment) return -1
-    len += segment.length - 1
-  }
-  return len
+  const segments = routeSegmentsForBlockedCells(cells)
+  return segments?.reduce((length, segment) => length + segment.length - 1, 0) ?? -1
 }
 
 /** Collect permanent towers/rocks as layout cells (towers count as rocks). */

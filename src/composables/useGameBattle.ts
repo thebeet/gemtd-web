@@ -1,4 +1,4 @@
-import { computed, ref } from 'vue'
+import { computed, onScopeDispose, ref } from 'vue'
 import { useWebSocket } from '@vueuse/core'
 import type * as Y from 'yjs'
 import { createInitialBattleSnapshot } from '../game/constants'
@@ -17,6 +17,7 @@ type BattleMessage =
 
 export function useGameBattle(options: {
   room: Ref<string>
+  online: Ref<boolean>
   playerId: Ref<string>
   doc: Y.Doc
   towers: Y.Map<string>
@@ -39,9 +40,9 @@ export function useGameBattle(options: {
     return `${base}?room=${encodeURIComponent(room.value)}`
   })
 
-  function sendGameMessage(message: unknown) {
-    send(JSON.stringify(message))
-  }
+  let sendRaw = (_message: string) => {}
+
+  function sendGameMessage(message: unknown) { sendRaw(JSON.stringify(message)) }
 
   function registerCombine(resultKey: string, ingredientKeys: string[], result: Tower) {
     sendGameMessage({
@@ -123,37 +124,6 @@ export function useGameBattle(options: {
     else showMessage(`已重开第 ${message.wave} 波：返回建造阶段`)
   }
 
-  const { status, send } = useWebSocket(gameUrl, {
-    autoReconnect: { retries: -1, delay: 1200 },
-    onConnected: () => syncCombatLayout(),
-    onMessage(_ws, event) {
-      try {
-        const message = JSON.parse(String(event.data)) as BattleMessage
-        if (message.type === 'error') {
-          showMessage(message.message)
-          return
-        }
-        if (message.type === 'leaderboard') {
-          leaderboardHandlers.forEach((handler) => handler(message))
-          return
-        }
-        if (message.type === 'combatEvents') {
-          combatEventHandlers.forEach((handler) => handler(message))
-          return
-        }
-        if (message.type === 'saveState') {
-          saveStateHandlers.forEach((handler) => handler(message))
-          return
-        }
-        serverClockOffset.value = message.serverTime - Date.now()
-        battleState.value = message
-        applyServerReset(message)
-        if (message.mvpAward) applyMvpAward(message.mvpAward)
-        options.onSnapshot(message)
-      } catch { /* ignore malformed battle messages */ }
-    },
-  })
-
   function applyMvpAward(award: NonNullable<BattleSnapshot['mvpAward']>) {
     const current = parseTower(towers.get(award.key))
     if (!current || current.type === 'rock') return
@@ -169,7 +139,59 @@ export function useGameBattle(options: {
     showMessage(`MVP：${award.name || current.name || award.key} 获得第 ${nextStacks} 层（伤害 +${nextStacks * 10}%）${auraNote}`)
   }
 
-  const battleConnected = computed(() => status.value === 'OPEN')
+  const connectionStatus = ref<'OPEN' | 'CLOSED'>('CLOSED')
+
+  function handleBattleMessage(raw: unknown) {
+    try {
+      const message = (typeof raw === 'string' ? JSON.parse(raw) : raw) as BattleMessage
+      if (message.type === 'error') {
+        showMessage(message.message)
+        return
+      }
+      if (message.type === 'leaderboard') {
+        leaderboardHandlers.forEach((handler) => handler(message))
+        return
+      }
+      if (message.type === 'combatEvents') {
+        combatEventHandlers.forEach((handler) => handler(message))
+        return
+      }
+      if (message.type === 'saveState') {
+        saveStateHandlers.forEach((handler) => handler(message))
+        return
+      }
+      serverClockOffset.value = message.serverTime - Date.now()
+      battleState.value = message
+      applyServerReset(message)
+      if (message.mvpAward) applyMvpAward(message.mvpAward)
+      options.onSnapshot(message)
+    } catch { /* Ignore malformed messages from a remote server or Worker. */ }
+  }
+
+  if (options.online.value) {
+    const { send } = useWebSocket(gameUrl, {
+      autoReconnect: { retries: -1, delay: 1200 },
+      onConnected: () => {
+        connectionStatus.value = 'OPEN'
+        syncCombatLayout()
+      },
+      onDisconnected: () => { connectionStatus.value = 'CLOSED' },
+      onMessage(_ws, event) { handleBattleMessage(String(event.data)) },
+    })
+    sendRaw = send
+  } else {
+    const worker = new Worker(new URL('../game/localCombatWorker.ts', import.meta.url), { type: 'module' })
+    worker.onmessage = (event: MessageEvent<{ type: 'message'; value: BattleMessage }>) => handleBattleMessage(event.data.value)
+    worker.onerror = () => {
+      connectionStatus.value = 'CLOSED'
+      showMessage('本地战斗引擎启动失败')
+    }
+    sendRaw = (message) => worker.postMessage(JSON.parse(message))
+    connectionStatus.value = 'OPEN'
+    onScopeDispose(() => worker.terminate())
+  }
+
+  const battleConnected = computed(() => connectionStatus.value === 'OPEN')
 
   function startCombat() {
     if (!battleConnected.value || battleState.value.phase !== 'build') return

@@ -39,7 +39,7 @@ RUN pnpm install --frozen-lockfile --prod
 
 COPY --from=build /app/dist ./dist
 COPY server ./server
-COPY src/game/tower.json src/game/waves.json ./src/game/
+COPY src/game ./src/game
 
 EXPOSE 1234
 

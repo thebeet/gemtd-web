@@ -8,24 +8,9 @@ importers:
 
   .:
     dependencies:
-      '@codemirror/lang-markdown':
-        specifier: ^6.3.2
-        version: 6.5.2
-      '@codemirror/state':
-        specifier: ^6.5.2
-        version: 6.7.1
-      '@codemirror/view':
-        specifier: ^6.36.3
-        version: 6.43.9
       '@vueuse/core':
         specifier: ^12.5.0
         version: 12.8.2(typescript@5.7.3)
-      dompurify:
-        specifier: ^3.2.4
-        version: 3.4.14
-      marked:
-        specifier: ^15.0.6
-        version: 15.0.12
       three:
         specifier: ^0.173.0
         version: 0.173.0
@@ -38,9 +23,6 @@ importers:
       ws:
         specifier: ^8.18.0
         version: 8.21.3
-      y-codemirror.next:
-        specifier: ^0.3.5
-        version: 0.3.6(@codemirror/state@6.7.1)(@codemirror/view@6.43.9)(yjs@13.6.32)
       y-websocket:
         specifier: ^2.1.0
         version: 2.1.0(yjs@13.6.32)
@@ -48,9 +30,6 @@ importers:
         specifier: ^13.6.23
         version: 13.6.32
     devDependencies:
-      '@types/dompurify':
-        specifier: ^3.0.5
-        version: 3.2.0
       '@types/node':
         specifier: ^22.10.2
         version: 22.20.1

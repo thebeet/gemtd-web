@@ -1,6 +1,15 @@
+import {
+  attackBonusFromAbilities, selfSpeedBonusFromAbilities, clampMvpStacks, mvpSelfBonus,
+  ATTACK_BONUS_BY_LEVEL, BASE_ATTACK_SPEED, SPEED_AURA_BONUS_BY_LEVEL, SPEED_AURA_RADIUS_CELLS,
+  GUICHU_SPEED_AURA_RADIUS_CELLS, RANGE_AURA_RADIUS_CELLS, RANGE_AURA_BONUS_UNITS, MAOYAN_AURA_RADIUS_CELLS,
+  MVP_MAX_STACKS, MVP_BONUS_PER_STACK, MVP_AURA_RADIUS_CELLS, CHENMO_AURA_RADIUS_CELLS,
+  JINGZHUN_AURA_RADIUS_CELLS,
+} from './towerRules'
+export { attackBonusFromAbilities, selfSpeedBonusFromAbilities, clampMvpStacks, mvpSelfBonus, MVP_MAX_STACKS, MVP_BONUS_PER_STACK, MVP_AURA_RADIUS_CELLS } from './towerRules'
+import { cellKey, isReservedBuildCell, routePointAt } from './grid'
 import towerData from './tower.json'
 import type { BaseTowerId, BattleCombineOption, KeepOption, PlayerBuildState, RecipeIngredientPreview, RecipePreview, Tower, TowerAuraEffect } from './types'
-import { CORNER_ZONE_SIZE, DOTA_UNITS_PER_CELL, GRID_SIZE, routePoints } from './constants'
+import { DOTA_UNITS_PER_CELL, GRID_SIZE, routePoints } from './constants'
 import type { Cell } from './types'
 import type * as Y from 'yjs'
 
@@ -21,23 +30,7 @@ for (const recipe of towerData.recipes) {
 
 export { baseData, recipeData, qualityNames, towerData, unitIdLabels }
 
-export function cellKey(cell: Cell) {
-  return `${cell.x}:${cell.z}`
-}
-
-export function isValidCell(cell: Cell) {
-  return cell.x >= 0 && cell.x < GRID_SIZE && cell.z >= 0 && cell.z < GRID_SIZE
-}
-
-export function routePointAt(cell: Cell) {
-  return routePoints.find((point) => point.x === cell.x && point.z === cell.z)
-}
-
-export function isReservedBuildCell(cell: Cell) {
-  const inStartCorner = cell.x < CORNER_ZONE_SIZE && cell.z < CORNER_ZONE_SIZE
-  const inEndCorner = cell.x >= GRID_SIZE - CORNER_ZONE_SIZE && cell.z >= GRID_SIZE - CORNER_ZONE_SIZE
-  return inStartCorner || inEndCorner
-}
+export { cellKey, isValidCell, routePointAt, isReservedBuildCell } from './grid'
 
 export function isBuildableCell(cell: Cell, towers: Y.Map<string>) {
   return !isReservedBuildCell(cell) && !routePointAt(cell) && !towers.has(cellKey(cell))
@@ -185,36 +178,9 @@ export function describeAbility(id: string) {
   return { id, name: id.replace(/^tower_/, '').replace(/_/g, ' '), description: '该塔固有的特殊能力。' }
 }
 
-const ATTACK_BONUS_BY_LEVEL = [0, 20, 40, 80, 160, 320, 640] as const
-
-/** Flat attack bonus from the tower's own 攻击强化 ability (highest level wins). */
-export function attackBonusFromAbilities(abilities: readonly string[]) {
-  let best = 0
-  for (const abilityId of abilities) {
-    const match = abilityId.match(/^tower_attack(\d+)$/)
-    if (!match) continue
-    const level = Number(match[1])
-    if (level >= 1 && level <= 6) best = Math.max(best, ATTACK_BONUS_BY_LEVEL[level] ?? 0)
-  }
-  return best
-}
-
 export function effectiveTowerDamageRange(stats: { damage: readonly [number, number] | number[]; abilities: readonly string[] }) {
   const bonus = attackBonusFromAbilities(stats.abilities)
   return [stats.damage[0] + bonus, stats.damage[1] + bonus] as const
-}
-
-export const MVP_MAX_STACKS = 10
-export const MVP_BONUS_PER_STACK = 0.1
-export const MVP_AURA_RADIUS_CELLS = 500 / DOTA_UNITS_PER_CELL
-
-export function clampMvpStacks(value: unknown) {
-  const stacks = Math.floor(Number(value) || 0)
-  return Math.max(0, Math.min(MVP_MAX_STACKS, stacks))
-}
-
-export function mvpSelfBonus(stacks: number) {
-  return clampMvpStacks(stacks) * MVP_BONUS_PER_STACK
 }
 
 /** Extra damage multiplier from nearby 10-stack MVP auras (excludes self). */
@@ -252,7 +218,6 @@ export function sumMvpStacksAmong(towers: Y.Map<string>, keys: readonly string[]
   return clampMvpStacks(total)
 }
 
-
 function formatAbilitySeconds(seconds: number) {
   const rounded = Math.round(seconds * 10) / 10
   return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1)
@@ -275,14 +240,7 @@ function classifyAuraEffect(abilityId: string): TowerAuraEffect['kind'] | undefi
 }
 
 // GemTD Overlook: aura radius 290, flat +300 attack range per provider.
-const RANGE_AURA_RADIUS_CELLS = 290 / DOTA_UNITS_PER_CELL
-const RANGE_AURA_BONUS_UNITS = 300
-const CHENMO_AURA_RADIUS_CELLS = 600 / DOTA_UNITS_PER_CELL
-const JINGZHUN_AURA_RADIUS_CELLS = 300 / DOTA_UNITS_PER_CELL
 const TANLAN_AURA_RADIUS_CELLS = 800 / DOTA_UNITS_PER_CELL
-const MAOYAN_AURA_RADIUS_CELLS = 500 / DOTA_UNITS_PER_CELL
-const SPEED_AURA_RADIUS_CELLS = 664 / DOTA_UNITS_PER_CELL
-const GUICHU_SPEED_AURA_RADIUS_CELLS = 200 / DOTA_UNITS_PER_CELL
 
 /** Aura radius in grid cells. Uses ability-specific radii when known; otherwise the tower's attack range. */
 export function getAllyBuffAuraRadiusCells(abilityId: string, attackRangeUnits: number) {
@@ -363,9 +321,6 @@ export function computeReceivedAuraEffects(towers: Y.Map<string>, targetKey: str
   })
 }
 
-const BASE_ATTACK_SPEED = 100
-const SPEED_AURA_BONUS_BY_LEVEL = [0, 20, 30, 40, 50, 60, 70] as const
-
 export function speedAuraBonusFromAbilities(abilities: readonly string[]) {
   let best = 0
   for (const abilityId of abilities) {
@@ -377,19 +332,6 @@ export function speedAuraBonusFromAbilities(abilities: readonly string[]) {
     if (!match) continue
     const level = Number(match[1])
     if (level >= 1 && level <= 6) best = Math.max(best, SPEED_AURA_BONUS_BY_LEVEL[level])
-  }
-  return best
-}
-
-/** Self 急速攻击: tower_speed1 = +200, tower_speed2+ = +500. */
-export function selfSpeedBonusFromAbilities(abilities: readonly string[]) {
-  let best = 0
-  for (const abilityId of abilities) {
-    const match = abilityId.match(/^tower_speed(\d+)$/)
-    if (!match) continue
-    const level = Number(match[1])
-    if (level >= 2) best = Math.max(best, 500)
-    else if (level >= 1) best = Math.max(best, 200)
   }
   return best
 }

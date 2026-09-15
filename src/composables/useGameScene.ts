@@ -1,3 +1,4 @@
+import { createSceneResources } from '../game/scene/resources'
 import { onMounted, ref, watch, type CSSProperties, type Ref } from 'vue'
 import { tryOnScopeDispose, useRafFn, useResizeObserver } from '@vueuse/core'
 import * as THREE from 'three'
@@ -33,6 +34,7 @@ import {
   towerData,
   towerDisplayName,
   typeHash,
+  unitIdShortLabel,
 } from '../game/towers'
 import { createTowerPrototype } from '../game/towerModels'
 import type {
@@ -45,8 +47,6 @@ import type {
   RoutePoint,
   Tower,
 } from '../game/types'
-
-export { towerDisplayName }
 
 export function useGameScene(options: {
   towers: Y.Map<string>
@@ -122,6 +122,7 @@ export function useGameScene(options: {
   const pointer = new THREE.Vector2()
   const cellGroup = new THREE.Group()
   const towerGroup = new THREE.Group()
+  const candidateLabelGroup = new THREE.Group()
   const monsterGroup = new THREE.Group()
   const projectileGroup = new THREE.Group()
   const effectGroup = new THREE.Group()
@@ -145,106 +146,69 @@ export function useGameScene(options: {
   const recipeFitBox = new THREE.Box3()
   const monsterVisuals = new Map<number, THREE.Group>()
   const monsterMeshes: THREE.Object3D[] = []
-  const monsterSelectionRingGeometry = new THREE.RingGeometry(0.42, 0.58, 32)
-  const monsterSelectionRingMaterial = new THREE.MeshBasicMaterial({
-    color: '#d4a017',
-    transparent: true,
-    opacity: 0.85,
-    side: THREE.DoubleSide,
-    depthWrite: false,
-  })
   const projectileVisuals = new Map<number, THREE.Group>()
   const impactEffects: { mesh: THREE.Mesh; bornAt: number }[] = []
   const laserLingerEffects: { root: THREE.Group; bornAt: number }[] = []
   const lightningEffects: { root: THREE.Group; bornAt: number; duration: number }[] = []
   const seenFxEventIds = new Set<number>()
 
-  const cellGeometry = new THREE.BoxGeometry(0.94, 0.1, 0.94)
-  const cellMaterial = new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.95 })
-  const towerGeometry = new THREE.CylinderGeometry(0.68, 0.8, 1.65, 6)
-  const recipeHaloGeometry = new THREE.TorusGeometry(0.58, 0.038, 6, 32)
-  const monsterBodyGeometry = new THREE.IcosahedronGeometry(.38, 1)
-  const monsterBossGeometry = new THREE.DodecahedronGeometry(.62, 1)
-  const monsterEyeGeometry = new THREE.SphereGeometry(.055, 8, 6)
-  const monsterWingGeometry = new THREE.ConeGeometry(.26, .62, 3)
-  const healthBarGeometry = new THREE.PlaneGeometry(1.18, .14)
-  const HEALTH_BAR_HALF_WIDTH = 1.18 / 2
-  const projectileGeometry = new THREE.SphereGeometry(.09, 10, 8)
-  const laserCoreGeometry = new THREE.CylinderGeometry(.035, .035, 1, 8)
-  const laserGlowGeometry = new THREE.CylinderGeometry(.11, .11, 1, 10)
-  const laserCoreMaterial = new THREE.MeshBasicMaterial({
-    color: '#eef8ff',
-    transparent: true,
-    opacity: .98,
-    depthWrite: false,
-  })
-  const laserGlowMaterial = new THREE.MeshBasicMaterial({
-    color: '#7ec8ff',
-    transparent: true,
-    opacity: .42,
-    depthWrite: false,
-  })
-  const laserUp = new THREE.Vector3(0, 1, 0)
-  const laserDir = new THREE.Vector3()
-  const laserFrom = new THREE.Vector3()
-  const laserTo = new THREE.Vector3()
-  const lightningCoreGeometry = new THREE.CylinderGeometry(.018, .018, 1, 6)
-  const lightningGlowGeometry = new THREE.CylinderGeometry(.045, .045, 1, 8)
-  const lightningSegFrom = new THREE.Vector3()
-  const lightningSegTo = new THREE.Vector3()
-  const lightningSegDir = new THREE.Vector3()
-  const arrowShaftGeometry = new THREE.CylinderGeometry(.028, .028, .32, 6)
-  const arrowTipGeometry = new THREE.ConeGeometry(.09, .22, 7)
-  const arrowFletchGeometry = new THREE.ConeGeometry(.07, .12, 3)
-  const arrowBodyMaterial = new THREE.MeshBasicMaterial({
-    color: '#5dff8a',
-    transparent: true,
-    opacity: .98,
-    depthWrite: false,
-  })
-  const arrowGlowMaterial = new THREE.MeshBasicMaterial({
-    color: '#b8ffd0',
-    transparent: true,
-    opacity: .55,
-    depthWrite: false,
-  })
-  const arrowTrailMaterial = new THREE.LineBasicMaterial({
-    color: '#62e398',
-    transparent: true,
-    opacity: .9,
-    depthWrite: false,
-    depthTest: true,
-    vertexColors: true,
-  })
-  const arrowUp = new THREE.Vector3(0, 1, 0)
-  const arrowDir = new THREE.Vector3()
-  const arrowTrailTipColor = new THREE.Color('#b8ffd0')
-  const arrowTrailTailColor = new THREE.Color('#1f6b3f')
-  const ARROW_TRAIL_MAX_POINTS = 56
-  const ARROW_TRAIL_MIN_STEP = 0.06
-  const impactGeometry = new THREE.RingGeometry(.12, .18, 20)
-  const healthBackMaterial = new THREE.MeshBasicMaterial({ color: '#2f4638', transparent: true, opacity: .92, depthTest: false, depthWrite: false, fog: false })
-  const healthFillMaterial = new THREE.MeshBasicMaterial({ color: '#65e58e', depthTest: false, depthWrite: false, fog: false })
-  const healthLowColor = new THREE.Color('#ff6b57')
-  const healthHighColor = new THREE.Color('#65e58e')
-  const eyeMaterial = new THREE.MeshBasicMaterial({ color: '#fff7cf' })
-  const projectileMaterials = new Map<string, THREE.MeshBasicMaterial>()
-  const candidateGlowGeometry = new THREE.CylinderGeometry(0.88, 0.88, 0.035, 6)
-  const candidateGlowMaterial = new THREE.MeshBasicMaterial({ color: '#ffe16e', transparent: true, opacity: 0.68, depthWrite: false })
-  const selectionRingGeometry = new THREE.TorusGeometry(0.52, 0.032, 6, 24)
-  const selectionRingMaterial = new THREE.MeshBasicMaterial({ color: '#d7fff0', transparent: true, opacity: 0.95, depthTest: false })
-  const rangeFillMaterial = new THREE.MeshBasicMaterial({ color: '#6e9a7b', transparent: true, opacity: 0.14, depthWrite: false })
-  const rangeEdgeMaterial = new THREE.LineBasicMaterial({ color: '#4f8168', transparent: true, opacity: 0.72, depthTest: false })
-  const auraRangeFillMaterial = new THREE.MeshBasicMaterial({ color: '#d4b45a', transparent: true, opacity: 0.18, depthWrite: false })
-  const auraRangeEdgeMaterial = new THREE.LineBasicMaterial({ color: '#c49a2e', transparent: true, opacity: 0.85, depthTest: false })
-  const layoutGuideGeometry = new THREE.BoxGeometry(0.88, 0.08, 0.88)
-  const layoutGuideMaterial = new THREE.MeshBasicMaterial({
-    color: '#e8b41a',
-    transparent: true,
-    opacity: 0.72,
-    depthWrite: false,
-    depthTest: false,
-  })
+  const {
+    monsterSelectionRingGeometry,
+    monsterSelectionRingMaterial,
+    cellGeometry,
+    cellMaterial,
+    towerGeometry,
+    recipeHaloGeometry,
+    monsterBodyGeometry,
+    monsterBossGeometry,
+    monsterEyeGeometry,
+    monsterWingGeometry,
+    healthBarGeometry,
+    healthBackGeometry,
+    HEALTH_BAR_HALF_WIDTH,
+    projectileGeometry,
+    laserCoreGeometry,
+    laserGlowGeometry,
+    laserCoreMaterial,
+    laserGlowMaterial,
+    laserUp,
+    laserDir,
+    laserFrom,
+    laserTo,
+    lightningCoreGeometry,
+    lightningGlowGeometry,
+    lightningSegFrom,
+    lightningSegTo,
+    lightningSegDir,
+    arrowShaftGeometry,
+    arrowTipGeometry,
+    arrowFletchGeometry,
+    arrowBodyMaterial,
+    arrowGlowMaterial,
+    arrowTrailMaterial,
+    arrowUp,
+    arrowDir,
+    arrowTrailTipColor,
+    arrowTrailTailColor,
+    ARROW_TRAIL_MAX_POINTS,
+    ARROW_TRAIL_MIN_STEP,
+    impactGeometry,
+    healthBackMaterial,
+    healthFillMaterial,
+    eyeMaterial,
+    projectileMaterials,
+    candidateGlowGeometry,
+    candidateGlowMaterial,
+    selectionRingGeometry,
+    selectionRingMaterial,
+    rangeFillMaterial,
+    rangeEdgeMaterial,
+    auraRangeFillMaterial,
+    auraRangeEdgeMaterial,
+    layoutGuideGeometry,
+    layoutGuideMaterial,
+    dispose: disposeResources,
+  } = createSceneResources()
   let rangeFillMesh: THREE.Mesh | undefined
   let rangeEdgeLine: THREE.LineLoop | undefined
   const auraPulseMaterials: THREE.MeshStandardMaterial[] = []
@@ -615,6 +579,51 @@ export function useGameScene(options: {
     auraPulseMaterials.length = 0
   }
 
+  function clearCandidateLabels() {
+    for (const label of candidateLabelGroup.children) {
+      const material = (label as THREE.Sprite).material
+      material.map?.dispose()
+      material.dispose()
+    }
+    candidateLabelGroup.clear()
+  }
+
+  function syncCandidateLabelVisibility() {
+    candidateLabelGroup.visible = topDownView.value && battleState.value.phase === 'build'
+  }
+
+  function addCandidateLabel(tower: Tower, cell: Cell) {
+    if (!tower.unitId) return
+    const canvas = document.createElement('canvas')
+    canvas.width = 128
+    canvas.height = 64
+    const context = canvas.getContext('2d')!
+    context.font = '700 44px sans-serif'
+    context.textAlign = 'center'
+    context.textBaseline = 'middle'
+    context.lineJoin = 'round'
+    context.lineWidth = 7
+    context.strokeStyle = '#17231c'
+    context.fillStyle = '#ffffff'
+    const text = unitIdShortLabel(tower.unitId)
+    context.strokeText(text, 64, 32)
+    context.fillText(text, 64, 32)
+    const texture = new THREE.CanvasTexture(canvas)
+    texture.colorSpace = THREE.SRGBColorSpace
+    const label = new THREE.Sprite(new THREE.SpriteMaterial({
+      map: texture, transparent: true, depthTest: false, depthWrite: false,
+      fog: false, toneMapped: false,
+    }))
+    label.name = `candidate-label:${text}`
+    // Keep the label centered on the candidate tile. A higher Y places it over
+    // the model in depth without changing its screen position in top-down view.
+    label.position.copy(position(cell)).add(new THREE.Vector3(0, 1.35, 0))
+    label.scale.set(.92, .46, 1)
+    label.renderOrder = 12
+    disableRaycast(label)
+    candidateLabelGroup.add(label)
+  }
+
   function enableAuraPulse(root: THREE.Object3D) {
     const shared = new Map<THREE.MeshStandardMaterial, THREE.MeshStandardMaterial>()
     root.traverse((item) => {
@@ -635,6 +644,8 @@ export function useGameScene(options: {
 
   function rebuildTowers() {
     if (!towerMaterials.size) return
+    clearCandidateLabels()
+    syncCandidateLabelVisibility()
     clearAuraPulseMaterials()
     while (towerGroup.children.length) {
       const object = towerGroup.remove(towerGroup.children[0])
@@ -662,6 +673,7 @@ export function useGameScene(options: {
       mesh.position.copy(position({ x, z }))
       mesh.userData = { ...mesh.userData, x, z, tower: true }
       if (tower.temporary) {
+        addCandidateLabel(tower, { x, z })
         const glow = new THREE.Mesh(candidateGlowGeometry, candidateGlowMaterial)
         glow.position.y = .02
         disableRaycast(glow)
@@ -687,10 +699,9 @@ export function useGameScene(options: {
     const fill = visual.userData.healthFill as THREE.Mesh
     if (!fill) return
     const ratio = maxHp > 0 ? Math.max(0, Math.min(1, hp / maxHp)) : 0
-    fill.scale.set(Math.max(ratio, 0.001), 1, 1)
+    fill.visible = ratio > 0
+    fill.scale.set(ratio, 1, 1)
     fill.position.x = -(1 - ratio) * HEALTH_BAR_HALF_WIDTH
-    const material = fill.material as THREE.MeshBasicMaterial
-    material.color.copy(healthHighColor).lerp(healthLowColor, 1 - ratio)
   }
 
   function createMonsterVisual(monster: BattleMonster) {
@@ -721,7 +732,7 @@ export function useGameScene(options: {
 
     const healthBar = new THREE.Group()
     healthBar.position.y = monster.boss ? 1.62 : 1.27
-    const back = new THREE.Mesh(healthBarGeometry, healthBackMaterial.clone())
+    const back = new THREE.Mesh(healthBackGeometry, healthBackMaterial.clone())
     const fill = new THREE.Mesh(healthBarGeometry, healthFillMaterial.clone())
     fill.position.z = 0.02
     back.renderOrder = 10
@@ -1718,7 +1729,7 @@ export function useGameScene(options: {
     warmRecipePrototypes()
     createMap()
     syncLayoutGuide()
-    scene.add(cellGroup, rangeIndicatorGroup, layoutGuideGroup, towerGroup, monsterGroup, projectileGroup, effectGroup, ghost)
+    scene.add(cellGroup, rangeIndicatorGroup, layoutGuideGroup, towerGroup, candidateLabelGroup, monsterGroup, projectileGroup, effectGroup, ghost)
     rebuildTowers()
     resize()
     animationClock.start()
@@ -1730,45 +1741,9 @@ export function useGameScene(options: {
     initialized = false
     controls?.dispose()
     renderer?.dispose()
-    cellGeometry.dispose()
-    cellMaterial.dispose()
-    towerGeometry.dispose()
-    recipeHaloGeometry.dispose()
-    monsterBodyGeometry.dispose()
-    monsterBossGeometry.dispose()
-    monsterEyeGeometry.dispose()
-    monsterWingGeometry.dispose()
-    healthBarGeometry.dispose()
-    projectileGeometry.dispose()
-    laserCoreGeometry.dispose()
-    laserGlowGeometry.dispose()
-    laserCoreMaterial.dispose()
-    laserGlowMaterial.dispose()
-    lightningCoreGeometry.dispose()
-    lightningGlowGeometry.dispose()
-    arrowShaftGeometry.dispose()
-    arrowTipGeometry.dispose()
-    arrowFletchGeometry.dispose()
-    arrowBodyMaterial.dispose()
-    arrowGlowMaterial.dispose()
-    arrowTrailMaterial.dispose()
-    impactGeometry.dispose()
-    healthBackMaterial.dispose()
-    healthFillMaterial.dispose()
-    eyeMaterial.dispose()
+    disposeResources()
+    clearCandidateLabels()
     projectileMaterials.forEach((material) => material.dispose())
-    candidateGlowGeometry.dispose()
-    candidateGlowMaterial.dispose()
-    selectionRingGeometry.dispose()
-    selectionRingMaterial.dispose()
-    monsterSelectionRingGeometry.dispose()
-    monsterSelectionRingMaterial.dispose()
-    rangeFillMaterial.dispose()
-    rangeEdgeMaterial.dispose()
-    auraRangeFillMaterial.dispose()
-    auraRangeEdgeMaterial.dispose()
-    layoutGuideGeometry.dispose()
-    layoutGuideMaterial.dispose()
     clearAuraPulseMaterials()
     clearLayoutGuide()
     clearRangeIndicator()
@@ -1809,6 +1784,7 @@ export function useGameScene(options: {
   }
 
   watch(selectedTowerKey, () => rebuildTowers())
+  watch([topDownView, () => battleState.value.phase], syncCandidateLabelVisibility)
   watch(selectedMonsterId, (id) => {
     monsterVisuals.forEach((visual, monsterId) => {
       const ring = visual.userData.selectionRing as THREE.Mesh | undefined
